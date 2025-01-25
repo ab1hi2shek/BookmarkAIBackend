@@ -1,4 +1,4 @@
-# Bookmark and Tag Management App
+# BookmarkAI Backend
 
 ## Description
 A Flask application integrated with Firebase Firestore to manage users, bookmarks, and tags. The app supports CRUD operations, searching, and filtering.
@@ -11,8 +11,7 @@ A Flask application integrated with Firebase Firestore to manage users, bookmark
 ## Installation
 
 1. Clone the repository.
-2. Set up a Firebase Firestore project.
-3. Download the Firebase Admin SDK private key and save it as `firebase-key.json`.
+3. Download the Firebase Admin SDK private key and save it as `credentials/credentials/firebase-adminsdk.json`. If downloaded file have different name, either rename to `firebase-adminsdk.json` or change path of credentials in `app.py` file.
 4. Install dependencies:
 
 ```bash
