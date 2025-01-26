@@ -1,10 +1,8 @@
 from flask import Blueprint, jsonify, request
-from functools import wraps
 from datetime import datetime
-import uuid
 from src.utils.init import db
-from src.models.tag_model import TAG_MODEL, TAG_COLLECTION, TAG_CREATOR
-from src.utils.routes_util import authorize_user, validate_required_fields
+from src.models.tag_model import TAG_MODEL, TAG_COLLECTION, TAG_CREATOR, TAG_ID_PREFIX
+from src.utils.routes_util import authorize_user, validate_required_fields, get_id, remove_tag_from_bookmarks
 
 # Define a blueprint for the User APIs
 tags_blueprint = Blueprint("tags_routes", __name__)
@@ -23,14 +21,14 @@ def create_tag():
         if not is_valid:
             return jsonify({"error": message}), 400
 
-        tagId = str(uuid.uuid4())
+        tagId = get_id(TAG_ID_PREFIX)
         now = datetime.now(datetime.timezone.utc).isoformat()
 
         tag = TAG_MODEL.copy()
         tag.update({
             "tagId": tagId,
             "tagName": request.user_id,
-            "creator": TAG_CREATOR.USER,
+            "creator": TAG_CREATOR.USER.value,
             "userId": data.get("title", ""),
             "createdAt": now
         })
@@ -79,8 +77,11 @@ def delete_tag(tag_id):
 
         if tag["userId"] != request.user_id:
             return jsonify({"error": f"User unauthorized to delete tag with tag_id: {tag_id}"}), 403
+        
+        # Remove tag from all bookmarks
+        remove_tag_from_bookmarks(tag_id)
 
-        # Delete the user document
+        # Delete the tag document
         tag_ref.delete()
 
         return jsonify({"message": f"Tag successfully deleted with tag_id: {tag_id}"}), 200
