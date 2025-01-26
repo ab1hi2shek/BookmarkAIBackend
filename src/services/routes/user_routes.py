@@ -22,6 +22,11 @@ def create_user():
 
         if not is_valid:
             return jsonify({"error": message}), 400
+        
+        user_email = data.get("email")
+        users_query = db.collection(USER_COLLECTION).where("email", "==", user_email).get()
+        if len(users_query) != 0:
+            return jsonify({"error": f"user already esists with email: {user_email}"}), 500
 
         user_id = get_id(USER_ID_PREFIX)
         now = datetime.now().isoformat()
@@ -32,7 +37,7 @@ def create_user():
             "firstName": data["firstName"],
             "lastName": data.get("lastName", ""),
             "avatarUrl": data.get("avatarUrl", ""),
-            "email": data.get("email"),
+            "email": user_email,
             "createdAt": now,
             "updatedAt": now
         })
