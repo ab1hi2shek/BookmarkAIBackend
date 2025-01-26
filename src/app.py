@@ -14,44 +14,6 @@ USER_COLLECTION = "users"
 BOOKMARK_COLLECTION = "bookmarks"
 TAG_COLLECTION = "tags"
 
-# Endpoints
-
-# Create a User
-@app.route("/users", methods=["POST"])
-def create_user():
-    user_data = request.json
-    user_ref = db.collection(USER_COLLECTION).document()
-    user_data["userId"] = user_ref.id
-    db.collection(USER_COLLECTION).document(user_ref.id).set(user_data)
-    return jsonify({"message": "User created", "userId": user_ref.id}), 201
-
-# Get User Details
-@app.route("/users/<user_id>", methods=["GET"])
-def get_user(user_id):
-    user = db.collection(USER_COLLECTION).document(user_id).get()
-    if user.exists:
-        return jsonify(user.to_dict()), 200
-    return jsonify({"error": "User not found"}), 404
-
-# Update User Details
-@app.route("/users/<user_id>", methods=["PUT"])
-def update_user(user_id):
-    user_data = request.json
-    user_ref = db.collection(USER_COLLECTION).document(user_id)
-    if user_ref.get().exists:
-        user_ref.update(user_data)
-        return jsonify({"message": "User updated"}), 200
-    return jsonify({"error": "User not found"}), 404
-
-# Delete User
-@app.route("/users/<user_id>", methods=["DELETE"])
-def delete_user(user_id):
-    user_ref = db.collection(USER_COLLECTION).document(user_id)
-    if user_ref.get().exists:
-        user_ref.delete()
-        return jsonify({"message": "User deleted"}), 200
-    return jsonify({"error": "User not found"}), 404
-
 # Create Bookmark
 @app.route("/bookmarks", methods=["POST"])
 def create_bookmark():
