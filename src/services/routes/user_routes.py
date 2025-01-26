@@ -1,105 +1,132 @@
 from flask import Blueprint, jsonify, request
-from src.utils.init import db
-from src.models.user_model import USER_MODEL, USER_COLLECTION
+from functools import wraps
 from datetime import datetime
 import uuid
+from src.utils.init import db
+from src.models.user_model import USER_MODEL, USER_COLLECTION
+from src.models.bookmark_model import BOOKMARK_COLLECTION
+from src.models.tag_model import TAG_COLLECTION
 
+# Define a blueprint for the User APIs
 user_blueprint = Blueprint("user_routes", __name__)
 
-# Helper function to check for a required field in user api request
-def check_for_required_fields(user_data, field_name):
-    if not user_data.get("userId", "").strip():
-        return jsonify({"error": "userId is required"}), 400
-    if not user_data.get("firstName", "").strip():
-        return jsonify({"error": "firstName is required"}), 400
+"""
+Utility function to validate required fields
+"""
+def validate_required_fields(data, required_fields):
+    for field in required_fields:
+        if field not in data or not data[field]:
+            return False, f"Missing required field: {field}"
+    return True, ""
 
 """
-API to create user.
+API to create a user.
 """
-@user_blueprint.route("/user", methods=["POST"])
+@user_blueprint.route("/users/create", methods=["POST"])
 def create_user():
     try:
-        user_data = request.get_json()
-        if not user_data:
-            return jsonify({"error": "No data provided"}), 400
-        
-        # Check for required fields.
-        check_for_required_fields(user_data)
+        data = request.json
+        required_fields = ["firstName", "email"]
+        is_valid, message = validate_required_fields(data, required_fields)
 
-        # Create user_data_as_per_model dict by taking missing values from model definition.
-        create_user_data = {key: user_data.get(key, USER_MODEL[key]) for key in USER_MODEL}
-        
-        # Save to Firestore
-        user_ref = db.collection(USER_COLLECTION).document(create_user_data["userId"])
-        user_ref.set(create_user_data)
+        if not is_valid:
+            return jsonify({"error": message}), 400
 
-        return jsonify({"message": "User created successfully"}), 201
+        user_id = str(uuid.uuid4())
+        now = datetime.now().isoformat()
+
+        user = USER_MODEL.copy()
+        user.update({
+            "userId": user_id,
+            "firstName": data["firstName"],
+            "lastName": data.get("lastName", ""),
+            "avatarUrl": data.get("avatarUrl", ""),
+            "email": data.get("email"),
+            "createdAt": now,
+            "updatedAt": now
+        })
+
+        db.collection(USER_COLLECTION).document(user_id).set(user)
+
+        return jsonify({"message": "User created successfully", "user": user}), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 """
-API to get user.
+API to get a user by userId
 """
-@user_blueprint.route("/user/<user_id>", methods=["GET"])
+@user_blueprint.route("/users/<user_id>", methods=["GET"])
 def get_user(user_id):
     try:
         user_ref = db.collection(USER_COLLECTION).document(user_id)
-        user_doc = user_ref.get()
+        user = user_ref.get().to_dict()
 
-        if not user_doc.exists:
-            return jsonify({"error": "User not found with user_id " + user_id}), 404
+        if not user:
+            return jsonify({"error": "User not found"}), 404
 
-        return jsonify(user_doc.to_dict()), 200
+        return jsonify({"user": user}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 """
-API to update user.
+API to update a user by userId
 """
-@user_blueprint.route("/user/<user_id>", methods=["PUT"])
+@user_blueprint.route("/users/<user_id>", methods=["PUT"])
 def update_user(user_id):
     try:
-        user_data = request.get_json()
-        if not user_data:
-            return jsonify({"error": "No data provided"}), 400
-
+        data = request.json
         user_ref = db.collection(USER_COLLECTION).document(user_id)
-        user_doc = user_ref.get()
+        user = user_ref.get().to_dict()
 
-        if not user_doc.exists():
-            return jsonify({"error": "User not found with user_id " + user_id}), 404
-        
-        # Check for required fields.
-        check_for_required_fields(user_data)
+        if not user:
+            return jsonify({"error": "User not found"}), 404
 
-        # Create user_data_as_per_model dict by taking missing values from model definition.
-        update_user_data = {key: user_data.get(key, USER_MODEL[key]) for key in USER_MODEL}
+        # TODO: Validate these data.
+        updated_fields = {}
+        if "firstName" in data:
+            updated_fields["firstName"] = data["firstName"]
+        if "lastName" in data:
+            updated_fields["lastName"] = data["lastName"]
+        if "avatarUrl" in data:
+            updated_fields["avatarUrl"] = data["avatarUrl"]
+        if "email" in data:
+            updated_fields["email"] = data["email"]
+        updated_fields["updatedAt"] = datetime.now().isoformat()
 
-        # Update Firestore document
-        user_ref.update(update_user_data)
+        # Save to firehose.
+        user_ref.update(updated_fields)
 
-        return jsonify({"message": "User updated successfully with user_id " + user_id}), 200
+        user.update(updated_fields)
+        return jsonify({"message": "User updated successfully", "user": user}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 """
-API to delete user.
+API to delete a user by userId and cascade delete associated bookmarks and tags
 """
-@user_blueprint.route("/user/<user_id>", methods=["DELETE"])
+@user_blueprint.route("/users/<user_id>", methods=["DELETE"])
 def delete_user(user_id):
     try:
         user_ref = db.collection(USER_COLLECTION).document(user_id)
-        user_doc = user_ref.get()
+        user = user_ref.get().to_dict()
 
-        if not user_doc.exists():
-            return jsonify({"error": "User not found with user_id " + user_id}), 404
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        # Delete all bookmarks associated with the user
+        bookmarks_query = db.collection(BOOKMARK_COLLECTION).where("userId", "==", user_id).stream()
+        for bookmark in bookmarks_query:
+            db.collection(BOOKMARK_COLLECTION).document(bookmark.id).delete()
+
+        # Delete all tags associated with the user
+        tags_query = db.collection(TAG_COLLECTION).where("userId", "==", user_id).stream()
+        for tag in tags_query:
+            db.collection(TAG_COLLECTION).document(tag.id).delete()
 
         # Delete the user document
         user_ref.delete()
 
-        return jsonify({"message": "User deleted successfully with user_id " + user_id}), 200
+        return jsonify({"message": f"User and associated bookmarks and tags deleted successfully\
+            for userId: {user_id}"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
