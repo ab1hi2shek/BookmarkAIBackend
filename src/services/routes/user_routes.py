@@ -64,7 +64,7 @@ def get_user(user_id):
         if not user:
             return jsonify({"error": "User not found"}), 404
 
-        return jsonify({"user": user}), 200
+        return jsonify({"message": "success", "user": user}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -97,7 +97,7 @@ def update_user(user_id):
         user_ref.update(updated_fields)
 
         user.update(updated_fields)
-        return jsonify({"message": "User updated successfully", "user": user}), 200
+        return jsonify({"message": f"User updated successfully with userId: {user_id}"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

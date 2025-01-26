@@ -17,14 +17,14 @@ API to create a bookmark.
 def create_bookmark():
     try:
         data = request.json
+
         required_fields = ["url"]
         is_valid, message = validate_required_fields(data, required_fields)
-
         if not is_valid:
             return jsonify({"error": message}), 400
 
         bookmark_id = str(uuid.uuid4())
-        now = datetime.now(datetime.timezone.utc).isoformat()
+        time_now = datetime.now(datetime.timezone.utc).isoformat()
 
         bookmark = BOOKMARK_MODEL.copy()
         bookmark.update({
@@ -34,8 +34,8 @@ def create_bookmark():
             "title": data.get("title", ""),
             "notes": data.get("notes", ""),
             "tags": data.get("tags", []),
-            "createdAt": now,
-            "updatedAt": now,
+            "createdAt": time_now,
+            "updatedAt": time_now,
             "isDeleted": False
         })
 
@@ -58,12 +58,12 @@ def get_bookmark(bookmark_id):
         bookmark = bookmark_ref.get().to_dict()
 
         if not bookmark or bookmark.get("isDeleted"):
-            return jsonify({"error": "Bookmark not found"}), 404
+            return jsonify({"error": f"Bookmark not found for bookmark_id: {bookmark_id}"}), 404
 
         if bookmark["userId"] != request.user_id:
-            return jsonify({"error": "Unauthorized user"}), 403
+            return jsonify({"error": f"User unauthorized to get bookmark with bookmark_id: {bookmark_id}"}), 403
 
-        return jsonify({"bookmark": bookmark}), 200
+        return jsonify({"message": "success", "bookmark": bookmark}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -81,10 +81,10 @@ def update_bookmark(bookmark_id):
         bookmark = bookmark_ref.get().to_dict()
 
         if not bookmark or bookmark.get("isDeleted"):
-            return jsonify({"error": "Bookmark not found"}), 404
+            return jsonify({"error": f"Bookmark not found for bookmark_id: {bookmark_id}"}), 404
 
         if bookmark["userId"] != request.user_id:
-            return jsonify({"error": "Unauthorized"}), 403
+            return jsonify({"error": f"User unauthorized to update bookmark with bookmark_id: {bookmark_id}"}), 403
 
         # Collect only fields that need to be updated
         updated_fields = {}
@@ -94,7 +94,7 @@ def update_bookmark(bookmark_id):
             updated_fields["notes"] = data["notes"]
         if "tags" in data:
             if not isinstance(data["tags"], list):
-                return jsonify({"error": "Tags must be a list"}), 400
+                return jsonify({"error": f"Tags provided in request must be a list"}), 400
             updated_fields["tags"] = data["tags"]
         updated_fields["updatedAt"] = datetime.now(datetime.timezone.utc).isoformat()
 
@@ -120,17 +120,17 @@ def delete_bookmark(bookmark_id):
         bookmark = bookmark_ref.get().to_dict()
 
         if not bookmark or bookmark.get("isDeleted"):
-            return jsonify({"error": "Bookmark not found"}), 404
+            return jsonify({"error": f"Bookmark not found for bookmark_id: {bookmark_id}"}), 404
 
         if bookmark["userId"] != request.user_id:
-            return jsonify({"error": "Unauthorized user"}), 403
+            return jsonify({"error": f"User unauthorized to update bookmark with bookmark_id: {bookmark_id}"}), 403
 
         # Update Firestore document
         bookmark["isDeleted"] = True
         bookmark["updatedAt"] = datetime.now(datetime.timezone.utc).isoformat()
         bookmark_ref.set(bookmark)
 
-        return jsonify({"message": "Bookmark deleted successfully with bookmark_id: " + bookmark_id}), 200
+        return jsonify({"message": f"Bookmark deleted successfully with bookmark_id: {bookmark_id}"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
@@ -159,6 +159,6 @@ def filter_bookmarks():
                 # Filter bookmarks that contain at least one tag
                 bookmarks = [b for b in bookmarks if any(tag in b.get("tags", []) for tag in tags_filter)]
 
-        return jsonify({"bookmarks": bookmarks}), 200
+        return jsonify({"message": "success", "bookmarks": bookmarks}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
