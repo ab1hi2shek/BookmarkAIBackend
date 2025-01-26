@@ -1,10 +1,9 @@
 from flask import Blueprint, jsonify, request
-from functools import wraps
 from datetime import datetime
 from src.utils.init import db
-import uuid
-from src.models.bookmark_model import BOOKMARK_MODEL, BOOKMARK_COLLECTION
-from src.utils.routes_util import authorize_user, validate_required_fields
+from src.models.bookmark_model import BOOKMARK_MODEL, BOOKMARK_COLLECTION, BOOKMARK_ID_PREFIX
+from src.models.tag_model import TAG_COLLECTION, TAG_CREATOR, TAG_ID_PREFIX
+from src.utils.routes_util import authorize_user, validate_required_fields, get_id
 
 # Define a blueprint for the User APIs
 bookmark_blueprint = Blueprint("bookmark_routes", __name__)
@@ -23,8 +22,31 @@ def create_bookmark():
         if not is_valid:
             return jsonify({"error": message}), 400
 
-        bookmark_id = str(uuid.uuid4())
+        bookmark_id = get_id(BOOKMARK_ID_PREFIX)
         time_now = datetime.now(datetime.timezone.utc).isoformat()
+
+        # Handle tags
+        tag_names = data.get("tags", []),
+        tag_ids = []
+        for tag_name in tag_names:
+            # Check if tag exists for the user
+            tag_query = db.collection(TAG_COLLECTION).where("tagName", "==", tag_name).where("userId", "==", request.user_id).get()
+            if tag_query:
+                # Tag exists
+                tag_id = tag_query[0].id
+            else:
+                # Create new tag
+                tag_id = get_id(TAG_ID_PREFIX)
+                tag_data = {
+                    "tagId": tag_id,
+                    "tagName": tag_name,
+                    "creator": TAG_CREATOR.USER.value,
+                    "userId": request.user_id,
+                    "createdAt": time_now
+                }
+                db.collection(TAG_COLLECTION).document(tag_id).set(tag_data)
+            tag_ids.append(tag_id)
+
 
         bookmark = BOOKMARK_MODEL.copy()
         bookmark.update({
@@ -33,7 +55,7 @@ def create_bookmark():
             "url": data["url"],
             "title": data.get("title", ""),
             "notes": data.get("notes", ""),
-            "tags": data.get("tags", []),
+            "tags": tag_ids,
             "createdAt": time_now,
             "updatedAt": time_now,
             "isDeleted": False
