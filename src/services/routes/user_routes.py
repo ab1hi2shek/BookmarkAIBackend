@@ -22,7 +22,7 @@ def validate_required_fields(data, required_fields):
 """
 API to create a user.
 """
-@user_blueprint.route("/users/create", methods=["POST"])
+@user_blueprint.route("/user/create", methods=["POST"])
 def create_user():
     try:
         data = request.json
@@ -55,7 +55,7 @@ def create_user():
 """
 API to get a user by userId
 """
-@user_blueprint.route("/users/<user_id>", methods=["GET"])
+@user_blueprint.route("/user/<user_id>", methods=["GET"])
 def get_user(user_id):
     try:
         user_ref = db.collection(USER_COLLECTION).document(user_id)
@@ -71,7 +71,7 @@ def get_user(user_id):
 """
 API to update a user by userId
 """
-@user_blueprint.route("/users/<user_id>", methods=["PUT"])
+@user_blueprint.route("/user/<user_id>", methods=["PUT"])
 def update_user(user_id):
     try:
         data = request.json
@@ -104,7 +104,7 @@ def update_user(user_id):
 """
 API to delete a user by userId and cascade delete associated bookmarks and tags
 """
-@user_blueprint.route("/users/<user_id>", methods=["DELETE"])
+@user_blueprint.route("/user/<user_id>", methods=["DELETE"])
 def delete_user(user_id):
     try:
         user_ref = db.collection(USER_COLLECTION).document(user_id)

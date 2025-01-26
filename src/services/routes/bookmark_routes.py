@@ -47,7 +47,7 @@ def authorize_user(func):
 """
 API to create a bookmark.
 """
-@bookmark_blueprint.route("/bookmarks/create", methods=["POST"])
+@bookmark_blueprint.route("/bookmark/create", methods=["POST"])
 @authorize_user
 def create_bookmark():
     data = request.json
@@ -82,7 +82,7 @@ def create_bookmark():
 """
 API to get a bookmark given bookmark_id
 """
-@bookmark_blueprint.route("/bookmarks/<bookmark_id>", methods=["GET"])
+@bookmark_blueprint.route("/bookmark/<bookmark_id>", methods=["GET"])
 @authorize_user
 def get_bookmark(bookmark_id):
     bookmark_ref = db.collection(BOOKMARK_COLLECTION).document(bookmark_id)
@@ -100,7 +100,7 @@ def get_bookmark(bookmark_id):
 """
 API to update a bookmark given bookmark_id
 """
-@bookmark_blueprint.route("/bookmarks/<bookmark_id>", methods=["POST"])
+@bookmark_blueprint.route("/bookmark/<bookmark_id>", methods=["POST"])
 @authorize_user
 def update_bookmark(bookmark_id):
     data = request.json
@@ -137,7 +137,7 @@ def update_bookmark(bookmark_id):
 """
 API to delete a bookmark given bookmark_id
 """
-@bookmark_blueprint.route("/bookmarks/<bookmark_id>", methods=["DELETE"])
+@bookmark_blueprint.route("/bookmark/<bookmark_id>", methods=["DELETE"])
 @authorize_user
 def delete_bookmark(bookmark_id):
     bookmark_ref = db.collection(BOOKMARK_COLLECTION).document(bookmark_id)
@@ -159,7 +159,7 @@ def delete_bookmark(bookmark_id):
 """
 API to get bookmarks given tag. This API matches for AND operator of all tags.
 """
-@bookmark_blueprint.route("/bookmarks/filter", methods=["POST"])
+@bookmark_blueprint.route("/bookmark/filter", methods=["POST"])
 @authorize_user
 def filter_bookmarks():
     data = request.json
