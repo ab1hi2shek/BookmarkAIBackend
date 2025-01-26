@@ -1,23 +1,14 @@
 from flask import Blueprint, jsonify, request
 from functools import wraps
 from datetime import datetime
-import uuid
-from src.utils.init import db
-from src.models.user_model import USER_MODEL, USER_COLLECTION
-from src.models.bookmark_model import BOOKMARK_COLLECTION
-from src.models.tag_model import TAG_COLLECTION
+from utils.init import db
+from models.user_model import USER_MODEL, USER_COLLECTION, USER_ID_PREFIX
+from models.bookmark_model import BOOKMARK_COLLECTION
+from models.tag_model import TAG_COLLECTION
+from utils.routes_util import validate_required_fields, get_id
 
 # Define a blueprint for the User APIs
 user_blueprint = Blueprint("user_routes", __name__)
-
-"""
-Utility function to validate required fields
-"""
-def validate_required_fields(data, required_fields):
-    for field in required_fields:
-        if field not in data or not data[field]:
-            return False, f"Missing required field: {field}"
-    return True, ""
 
 """
 API to create a user.
@@ -32,7 +23,7 @@ def create_user():
         if not is_valid:
             return jsonify({"error": message}), 400
 
-        user_id = str(uuid.uuid4())
+        user_id = get_id(USER_ID_PREFIX)
         now = datetime.now().isoformat()
 
         user = USER_MODEL.copy()

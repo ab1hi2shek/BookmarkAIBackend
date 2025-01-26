@@ -1,8 +1,8 @@
 from flask import Blueprint, jsonify, request
 from datetime import datetime
-from src.utils.init import db
-from src.models.bookmark_model import BOOKMARK_MODEL, BOOKMARK_COLLECTION, BOOKMARK_ID_PREFIX
-from src.utils.routes_util import authorize_user, validate_required_fields, get_id, process_tags
+from utils.init import db
+from models.bookmark_model import BOOKMARK_MODEL, BOOKMARK_COLLECTION, BOOKMARK_ID_PREFIX
+from utils.routes_util import authorize_user, validate_required_fields, get_id, process_tags
 
 # Define a blueprint for the User APIs
 bookmark_blueprint = Blueprint("bookmark_routes", __name__)
@@ -44,6 +44,8 @@ def create_bookmark():
         db.collection(BOOKMARK_COLLECTION).document(bookmark_id).set(bookmark)
 
         return jsonify({"message": "Bookmark created successfully", "bookmark": bookmark}), 201
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -96,6 +98,11 @@ def update_bookmark(bookmark_id):
         if "tags" in data:
             if not isinstance(data["tags"], list):
                 return jsonify({"error": f"Tags provided in request must be a list"}), 400
+            requested_tag_ids = data.get("tags", [])
+            existing_tag_ids = set(bookmark.get("tags", []))
+            tag_ids_to_remove = list(set(existing_tag_ids).difference(requested_tag_ids))
+            tag_ids_to_add = list(set(requested_tag_ids).difference(existing_tag_ids))
+
             updated_fields["tags"] = data["tags"]
         updated_fields["updatedAt"] = datetime.now(datetime.timezone.utc).isoformat()
 

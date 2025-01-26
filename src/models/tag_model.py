@@ -9,6 +9,8 @@ class TAG_CREATOR(Enum):
 
 TAG_COLLECTION = "tags"
 
+TAG_ID_PREFIX = "tag"
+
 TAG_MODEL = {
     "tagId": "", # Required.
     "tagName": "", # Required.

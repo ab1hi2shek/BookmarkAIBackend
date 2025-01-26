@@ -1,11 +1,11 @@
 from flask import jsonify, request
 from functools import wraps
-from src.utils.init import db
+from utils.init import db
 import uuid
 from datetime import datetime
-from src.models.user_model import USER_COLLECTION
-from src.models.bookmark_model import BOOKMARK_COLLECTION
-from src.models.tag_model import TAG_CREATOR, TAG_COLLECTION, TAG_ID_PREFIX
+from models.user_model import USER_COLLECTION
+from models.bookmark_model import BOOKMARK_COLLECTION
+from models.tag_model import TAG_CREATOR, TAG_COLLECTION, TAG_ID_PREFIX
 
 """
 Decorator that ensures only authorized users can access the wrapped API routes.
@@ -101,7 +101,7 @@ def process_tags(tag_names, user_id):
 """
 Remove tag from bookmark. If a bookmark have only input tag, delete the bookmark.
 """
-def remove_tag_from_bookmarks(tag_id):
+def remove_tag_from_all_bookmarks(tag_id):
     bookmarks_query = db.collection(BOOKMARK_COLLECTION)\
         .where("userId", "==", request.user_id)\
         .where("tags", "array_contains", tag_id)

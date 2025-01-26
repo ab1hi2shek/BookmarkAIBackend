@@ -8,7 +8,7 @@ def create_app():
 
 # Initialize Firebase and Firestore
 def init_firestore():
-    cred = credentials.Certificate("path/to/your/serviceAccountKey.json")
+    cred = credentials.Certificate("credentials/firebase-adminsdk.json")
     initialize_app(cred)
     return firestore.client()
 
