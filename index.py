@@ -7,4 +7,5 @@ app = create_app()
 app.register_blueprint(api_blueprint, url_prefix="/api")
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    from waitress import serve
+    serve(app, host="0.0.0.0", port=8080)
