@@ -1,11 +1,11 @@
 from flask import Blueprint, jsonify, request
 from functools import wraps
 from datetime import datetime
-from utils.init import db
-from models.user_model import USER_MODEL, USER_COLLECTION, USER_ID_PREFIX
-from models.bookmark_model import BOOKMARK_COLLECTION
-from models.tag_model import TAG_COLLECTION
-from utils.routes_util import validate_required_fields, get_id
+from src.utils.init import db
+from src.models.user_model import USER_MODEL, USER_COLLECTION, USER_ID_PREFIX
+from src.models.bookmark_model import BOOKMARK_COLLECTION
+from src.models.tag_model import TAG_COLLECTION
+from src.utils.routes_util import validate_required_fields, get_id
 
 # Define a blueprint for the User APIs
 user_blueprint = Blueprint("user_routes", __name__)

@@ -1,8 +1,8 @@
 from flask import Blueprint, jsonify, request
 from datetime import datetime
-from utils.init import db
-from models.tag_model import TAG_MODEL, TAG_COLLECTION, TAG_CREATOR, TAG_ID_PREFIX
-from utils.routes_util import authorize_user, validate_required_fields, get_id, remove_tag_from_all_bookmarks
+from src.utils.init import db
+from src.models.tag_model import TAG_MODEL, TAG_COLLECTION, TAG_CREATOR, TAG_ID_PREFIX
+from src.utils.routes_util import authorize_user, validate_required_fields, get_id, remove_tag_from_all_bookmarks
 
 # Define a blueprint for the User APIs
 tags_blueprint = Blueprint("tags_routes", __name__)

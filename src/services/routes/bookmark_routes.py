@@ -1,8 +1,8 @@
 from flask import Blueprint, jsonify, request
 from datetime import datetime
-from utils.init import db
-from models.bookmark_model import BOOKMARK_MODEL, BOOKMARK_COLLECTION, BOOKMARK_ID_PREFIX
-from utils.routes_util import authorize_user, validate_required_fields, get_id, process_tags
+from src.utils.init import db
+from src.models.bookmark_model import BOOKMARK_MODEL, BOOKMARK_COLLECTION, BOOKMARK_ID_PREFIX
+from src.utils.routes_util import authorize_user, validate_required_fields, get_id, process_tags
 
 # Define a blueprint for the User APIs
 bookmark_blueprint = Blueprint("bookmark_routes", __name__)

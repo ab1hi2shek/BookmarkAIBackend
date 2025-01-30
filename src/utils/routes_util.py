@@ -1,11 +1,11 @@
 from flask import jsonify, request
 from functools import wraps
-from utils.init import db
+from src.utils.init import db
 import uuid
 from datetime import datetime
-from models.user_model import USER_COLLECTION
-from models.bookmark_model import BOOKMARK_COLLECTION
-from models.tag_model import TAG_CREATOR, TAG_COLLECTION, TAG_ID_PREFIX
+from src.models.user_model import USER_COLLECTION
+from src.models.bookmark_model import BOOKMARK_COLLECTION
+from src.models.tag_model import TAG_CREATOR, TAG_COLLECTION, TAG_ID_PREFIX
 
 """
 Decorator that ensures only authorized users can access the wrapped API routes.
