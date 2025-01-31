@@ -45,7 +45,7 @@ curl -X POST -H "Content-Type: application/json" -d '{"firstName": "John", "last
 # Create a new user in vercel
 curl -X POST -H "Content-Type: application/json" -d '{"firstName": "John", "lastName": "Doe", "avatarUrl": "example.com/avatar", "email": "abc3@gmail.com"}' https://bookmark-ai-backend.vercel.app/api/user/create
 
-# create bookmark
+# create bookmark in local
 curl -X POST http://127.0.0.1:5002/api/bookmark/create \
      -H "Content-Type: application/json" \
      -H "userId: user-7601dd26-64ac-4327-84e2-e2d758701934" \
@@ -53,3 +53,14 @@ curl -X POST http://127.0.0.1:5002/api/bookmark/create \
           "url": "https://www.reddit.com/r/vancouver/",
           "tags": ["reddit", "vancouver"]
          }'
+
+# create bookmark in versel
+curl -X POST https://bookmark-ai-backend.vercel.app/api/bookmark/create \
+     -H "Content-Type: application/json" \
+     -H "userId: user-7601dd26-64ac-4327-84e2-e2d758701934" \
+     -d '{
+          "url": "https://www.reddit.com/r/vancouver/",
+          "tags": ["reddit", "vancouver"]
+         }'
+
+```
