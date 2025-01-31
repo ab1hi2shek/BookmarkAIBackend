@@ -40,4 +40,4 @@ python app.py
 
 ```bash
 # Create a new user
-curl -X POST -H "Content-Type: application/json" -d '{"firstName": "John", "lastName": "Doe", "avatarUrl": "example.com/avatar", "email": "abc3@gmail.com"}' https://bookmark-ai-backend.vercel.app//api/user/create
+curl -X POST -H "Content-Type: application/json" -d '{"firstName": "John", "lastName": "Doe", "avatarUrl": "example.com/avatar", "email": "abc3@gmail.com"}' http://127.0.0.1:5002/api/user/create
