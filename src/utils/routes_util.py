@@ -2,7 +2,7 @@ from flask import jsonify, request
 from functools import wraps
 from src.utils.init import db
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from src.models.user_model import USER_COLLECTION
 from src.models.bookmark_model import BOOKMARK_COLLECTION
 from src.models.tag_model import TAG_CREATOR, TAG_COLLECTION, TAG_ID_PREFIX
@@ -68,7 +68,7 @@ def process_tags(tag_names, user_id):
     if not isinstance(tag_names, list):
         raise ValueError("Tags must be a list of strings.")
 
-    time_now = datetime.now(datetime.timezone.utc).isoformat()
+    time_now = datetime.now(timezone.utc).isoformat()
     tag_ids = []
 
     for tag_name in tag_names:

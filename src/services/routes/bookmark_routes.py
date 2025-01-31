@@ -1,5 +1,5 @@
+from datetime import datetime, timezone
 from flask import Blueprint, jsonify, request
-from datetime import datetime
 from src.utils.init import db
 from src.models.bookmark_model import BOOKMARK_MODEL, BOOKMARK_COLLECTION, BOOKMARK_ID_PREFIX
 from src.utils.routes_util import authorize_user, validate_required_fields, get_id, process_tags
@@ -22,22 +22,24 @@ def create_bookmark():
             return jsonify({"error": message}), 400
 
         bookmark_id = get_id(BOOKMARK_ID_PREFIX)
-        time_now = datetime.now(datetime.timezone.utc).isoformat()
+        time_now = datetime.now(timezone.utc).isoformat()
 
         # Handle tags
-        tag_ids = process_tags(data["tags"], request.user_id)
+        tag_ids = process_tags(data.get("tags", []), request.user_id)
 
         bookmark = BOOKMARK_MODEL.copy()
         bookmark.update({
             "bookmarkId": bookmark_id,
             "userId": request.user_id,
             "url": data["url"],
+            "imageUrl": data.get("imageUrl", ""),
             "title": data.get("title", ""),
             "notes": data.get("notes", ""),
             "tags": tag_ids,
             "createdAt": time_now,
             "updatedAt": time_now,
-            "isDeleted": False
+            "isDeleted": False,
+            "isFavorite": False
         })
 
         # Save to Firestore
@@ -53,7 +55,7 @@ def create_bookmark():
 """
 API to get a bookmark given bookmark_id
 """
-@bookmark_blueprint.route("/bookmark/<bookmark_id>", methods=["GET"])
+@bookmark_blueprint.route("/bookmark/get/<bookmark_id>", methods=["GET"])
 @authorize_user
 def get_bookmark(bookmark_id):
     try:
@@ -75,7 +77,7 @@ def get_bookmark(bookmark_id):
 """
 API to update a bookmark given bookmark_id
 """
-@bookmark_blueprint.route("/bookmark/<bookmark_id>", methods=["POST"])
+@bookmark_blueprint.route("/bookmark/update/<bookmark_id>", methods=["POST"])
 @authorize_user
 def update_bookmark(bookmark_id):
     try:
@@ -104,7 +106,7 @@ def update_bookmark(bookmark_id):
             tag_ids_to_add = list(set(requested_tag_ids).difference(existing_tag_ids))
 
             updated_fields["tags"] = data["tags"]
-        updated_fields["updatedAt"] = datetime.now(datetime.timezone.utc).isoformat()
+        updated_fields["updatedAt"] = datetime.now(timezone.utc).isoformat()
 
         # Save to Firestore
         bookmark_ref.update(updated_fields)
@@ -120,7 +122,7 @@ def update_bookmark(bookmark_id):
 """
 API to delete a bookmark given bookmark_id
 """
-@bookmark_blueprint.route("/bookmark/<bookmark_id>", methods=["DELETE"])
+@bookmark_blueprint.route("/bookmark/delete/<bookmark_id>", methods=["DELETE"])
 @authorize_user
 def delete_bookmark(bookmark_id):
     try:
@@ -135,10 +137,35 @@ def delete_bookmark(bookmark_id):
 
         # Update Firestore document
         bookmark["isDeleted"] = True
-        bookmark["updatedAt"] = datetime.now(datetime.timezone.utc).isoformat()
+        bookmark["updatedAt"] = datetime.now(timezone.utc).isoformat()
         bookmark_ref.set(bookmark)
 
         return jsonify({"message": f"Bookmark deleted successfully with bookmark_id: {bookmark_id}"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+"""
+API to set a bookmark as favorite (or remove) given bookmark_id
+"""
+@bookmark_blueprint.route("/bookmark/favorite/<bookmark_id>", methods=["DELETE"])
+@authorize_user
+def toggle_favorite(bookmark_id):
+    try:
+        bookmark_ref = db.collection(BOOKMARK_COLLECTION).document(bookmark_id)
+        bookmark = bookmark_ref.get().to_dict()
+
+        if not bookmark or bookmark.get("isDeleted"):
+            return jsonify({"error": f"Bookmark not found for bookmark_id: {bookmark_id}"}), 404
+
+        if bookmark["userId"] != request.user_id:
+            return jsonify({"error": f"User unauthorized to update bookmark with bookmark_id: {bookmark_id}"}), 403
+
+        # Update Firestore document
+        bookmark["isFavorite"] = not bookmark["isFavorite"]
+        bookmark["updatedAt"] = datetime.now(timezone.utc).isoformat()
+        bookmark_ref.set(bookmark)
+
+        return jsonify({"message": f"Bookmark favorite set as {bookmark['isFavorite']} with bookmark_id: {bookmark_id}"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     

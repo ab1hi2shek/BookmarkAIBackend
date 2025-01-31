@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from datetime import datetime
+from datetime import datetime, timezone
 from src.utils.init import db
 from src.models.tag_model import TAG_MODEL, TAG_COLLECTION, TAG_CREATOR, TAG_ID_PREFIX
 from src.utils.routes_util import authorize_user, validate_required_fields, get_id, remove_tag_from_all_bookmarks
@@ -22,14 +22,14 @@ def create_tag():
             return jsonify({"error": message}), 400
 
         tagId = get_id(TAG_ID_PREFIX)
-        now = datetime.now(datetime.timezone.utc).isoformat()
+        now = datetime.now(timezone.utc).isoformat()
 
         tag = TAG_MODEL.copy()
         tag.update({
             "tagId": tagId,
             "tagName": request.user_id,
             "creator": TAG_CREATOR.USER.value,
-            "userId": data.get("title", ""),
+            "userId": request.user_id,
             "createdAt": now
         })
 
@@ -44,7 +44,7 @@ def create_tag():
 """
 API to get a tag given tag_id
 """
-@tags_blueprint.route("/tag/<tag_id>", methods=["GET"])
+@tags_blueprint.route("/tag/get/<tag_id>", methods=["GET"])
 @authorize_user
 def get_tag(tag_id):
     try:
@@ -60,12 +60,46 @@ def get_tag(tag_id):
         return jsonify({"message": "success", "tag": tag}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+
+"""
+API to update a tag
+"""
+@tags_blueprint.route("/tag/update/<tag_id>", methods=["POST"])
+@authorize_user
+def update_tag(tag_id):
+    try:
+        data = request.json
+        tag_ref = db.collection(TAG_COLLECTION).document(tag_id)
+        tag = tag_ref.get().to_dict()
+
+        if not tag:
+            return jsonify({"error": f"Tag not found for tag_id: {tag_id}"}), 404
+        if tag["userId"] != request.user_id:
+            return jsonify({"error": f"User unauthorized to delete tag with tag_id: {tag_id}"}), 403
+        
+        required_fields = ["tagName"]
+        is_valid, message = validate_required_fields(data, required_fields)
+        if not is_valid:
+            return jsonify({"error": message}), 400
+        
+        updated_fields = {}
+        if "tagName" in data:
+            updated_fields["tagName"] = data["tagName"]
+        updated_fields["updatedAt"] = datetime.now(timezone.utc).isoformat()
+        
+        # Save to firehose.
+        tag_ref.update(updated_fields)
+        tag.update(updated_fields)
+        return jsonify({"message": f"Tag updated successfully with tagId: {tag_id}"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 """
 API to delete a tag given bookmark_id
 """
-@tags_blueprint.route("/tag/<tag_id>", methods=["DELETE"])
+@tags_blueprint.route("/tag/delete/<tag_id>", methods=["DELETE"])
 @authorize_user
 def delete_tag(tag_id):
     try:

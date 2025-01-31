@@ -6,6 +6,7 @@ USER_MODEL = {
     "userId": "", # Required
     "firstName": "", # Required
     "lastName": "",
+    "email": "", # Required
     "avatarUrl": "",
     "createdAt": "", # Set by service code.
     "updatedAt": "" # Set by service code.
