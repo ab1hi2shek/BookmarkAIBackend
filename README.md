@@ -63,4 +63,17 @@ curl -X POST https://bookmark-ai-backend.vercel.app/api/bookmark/create \
           "tags": ["reddit", "vancouver"]
          }'
 
+# to fetch all bookmarks
+curl -X POST https://bookmark-ai-backend.vercel.app/api/bookmark/filter \
+     -H "Content-Type: application/json" \
+     -H "userId: user-7601dd26-64ac-4327-84e2-e2d758701934" \
+     -d '{}'
+
+
+# to fetch all tags
+curl -X GET http://127.0.0.1:5002/api/tag/all \
+     -H "Content-Type: application/json" \
+     -H "userId: user-7601dd26-64ac-4327-84e2-e2d758701934" \
+     -d '{}'
+
 ```

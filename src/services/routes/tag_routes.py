@@ -36,7 +36,12 @@ def create_tag():
         # Save to Firestore
         db.collection(TAG_COLLECTION).document(tagId).set(tag)
 
-        return jsonify({"message": "Tag created successfully", "tag": tag}), 201
+        return jsonify({
+            "message": "Tag created successfully", 
+            "data": {
+                "tag": tag
+            }
+        }), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -57,7 +62,32 @@ def get_tag(tag_id):
         if tag["userId"] != request.user_id:
             return jsonify({"error": f"User unauthorized to delete tag with tag_id: {tag_id}"}), 403
 
-        return jsonify({"message": "success", "tag": tag}), 200
+        return jsonify({
+            "message": "success", 
+            "data": {
+                "tag": tag
+            }
+        }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+
+"""
+API to get all tags for a user
+"""
+@tags_blueprint.route("/tag/all", methods=["GET"])
+@authorize_user
+def get_all_tags():
+    try:
+        tags_query = db.collection(TAG_COLLECTION).where("userId", "==", request.user_id).stream()
+        tags = [tag.to_dict() for tag in tags_query]
+
+        return jsonify({
+            "message": "success", 
+            "data": {
+                "tags": tags
+            }
+        }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
@@ -91,7 +121,13 @@ def update_tag(tag_id):
         # Save to firehose.
         tag_ref.update(updated_fields)
         tag.update(updated_fields)
-        return jsonify({"message": f"Tag updated successfully with tagId: {tag_id}"}), 200
+
+        return jsonify({
+            "message": "Tag updated successfully", 
+            "data": {
+                "tag_id": tag_id
+            }
+        }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -118,6 +154,11 @@ def delete_tag(tag_id):
         # Delete the tag document
         tag_ref.delete()
 
-        return jsonify({"message": f"Tag successfully deleted with tag_id: {tag_id}"}), 200
+        return jsonify({
+            "message": "Tag successfully deleted", 
+            "data": {
+                "tag_id": tag_id
+            }
+        }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
