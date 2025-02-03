@@ -1,8 +1,12 @@
+from flask_cors import CORS
 from src.utils.init import create_app
 from src.services.routes import api_blueprint
 from waitress import serve
 
 app = create_app()
+
+# Enable CORS for all origins
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 PORT = 5002
 
