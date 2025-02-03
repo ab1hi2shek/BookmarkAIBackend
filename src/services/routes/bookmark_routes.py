@@ -224,9 +224,12 @@ def filter_bookmarks():
                 # Filter bookmarks that contain at least one tag
                 bookmarks = [b for b in bookmarks if any(tag in b.get("tags", []) for tag in tags_filter)]
 
-        # 🔹 Replace tag IDs with tag names
+        # Replace tag IDs with full tag objects (tagId & tagName)
         for bookmark in bookmarks:
-            bookmark["tags"] = [tag_map[tag_id] for tag_id in bookmark["tags"] if tag_id in tag_map]
+            bookmark["tags"] = [
+                {"tagId": tag_id, "tagName": tag_map[tag_id]}
+                for tag_id in bookmark["tags"] if tag_id in tag_map
+            ]
 
         return jsonify({
             "message": "success", 
