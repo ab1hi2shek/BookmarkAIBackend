@@ -54,7 +54,7 @@ curl -X POST http://127.0.0.1:5002/api/bookmark/create \
           "tags": ["reddit", "vancouver"]
          }'
 
-# create bookmark in versel
+# create bookmark in vercel
 curl -X POST https://bookmark-ai-backend.vercel.app/api/bookmark/create \
      -H "Content-Type: application/json" \
      -H "userId: user-7601dd26-64ac-4327-84e2-e2d758701934" \
@@ -63,17 +63,40 @@ curl -X POST https://bookmark-ai-backend.vercel.app/api/bookmark/create \
           "tags": ["reddit", "vancouver"]
          }'
 
-# to fetch all bookmarks
+# to fetch all bookmarks in vercel
 curl -X POST https://bookmark-ai-backend.vercel.app/api/bookmark/filter \
      -H "Content-Type: application/json" \
      -H "userId: user-7601dd26-64ac-4327-84e2-e2d758701934" \
      -d '{}'
 
+# To update a bookmark tags
+curl -X POST http://127.0.0.1:5000/api/bookmark/update/bookmark-a8ceaf44-891b-403c-8e35-df363dfb9b2f \
+     -H "Content-Type: application/json" \
+     -H "userId: user-7601dd26-64ac-4327-84e2-e2d758701934" \
+     -d '{
+          "tags": ["reddit", "vancouver"]
+         }'
 
-# to fetch all tags
-curl -X GET http://127.0.0.1:5002/api/tag/all \
+# to fetch all tags in local
+curl -X GET http://127.0.0.1:5000/api/tag/all \
      -H "Content-Type: application/json" \
      -H "userId: user-7601dd26-64ac-4327-84e2-e2d758701934" \
      -d '{}'
+
+# to fetch all tags in vercel
+curl -X GET https://bookmark-ai-backend.vercel.app/api/tag/all \
+     -H "Content-Type: application/json" \
+     -H "userId: user-7601dd26-64ac-4327-84e2-e2d758701934" \
+     -d '{}'
+
+
+curl -X POST https://bookmark-ai-backend.vercel.app/api/bookmark/create \
+     -H "Content-Type: application/json" \
+     -H "userId: user-7601dd26-64ac-4327-84e2-e2d758701934" \
+     -d '{
+          "url": "https://www.reddit.com/r/vancouver/",
+          "tags": ["reddit", "vancouver"],
+          "imageUrl": "https://www.w3schools.com/images/w3schools_logo_436_2.png"
+         }'
 
 ```

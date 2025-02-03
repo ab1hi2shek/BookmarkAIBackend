@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from flask import Blueprint, jsonify, request
 from src.utils.init import db
 from src.models.bookmark_model import BOOKMARK_MODEL, BOOKMARK_COLLECTION, BOOKMARK_ID_PREFIX
+from src.models.tag_model import TAG_COLLECTION
 from src.utils.routes_util import authorize_user, validate_required_fields, get_id, process_tags
 
 # Define a blueprint for the User APIs
@@ -108,14 +109,13 @@ def update_bookmark(bookmark_id):
         if "notes" in data:
             updated_fields["notes"] = data["notes"]
         if "tags" in data:
+            print(data.get("tags", []))
             if not isinstance(data["tags"], list):
                 return jsonify({"error": f"Tags provided in request must be a list"}), 400
-            requested_tag_ids = data.get("tags", [])
-            existing_tag_ids = set(bookmark.get("tags", []))
-            tag_ids_to_remove = list(set(existing_tag_ids).difference(requested_tag_ids))
-            tag_ids_to_add = list(set(requested_tag_ids).difference(existing_tag_ids))
-
-            updated_fields["tags"] = data["tags"]
+            # Handle tags
+            tag_ids = process_tags(data.get("tags", []), request.user_id)
+            print("haha", tag_ids)
+            updated_fields["tags"] = tag_ids
         updated_fields["updatedAt"] = datetime.now(timezone.utc).isoformat()
 
         # Save to Firestore
@@ -212,6 +212,10 @@ def filter_bookmarks():
             .where("isDeleted", "==", False)
         bookmarks = [doc.to_dict() for doc in bookmarks_query.stream()]
 
+        # Fetch all tags for the user in a single query
+        tags_query = db.collection(TAG_COLLECTION).where("userId", "==", request.user_id).stream()
+        tag_map = {tag.id: tag.to_dict()["tagName"] for tag in tags_query}  # 🔹 Convert to {tagId: tagName} dict
+
         if tags_filter:
             if match_type == "AND":
                 # Filter bookmarks that contain all tags
@@ -219,6 +223,10 @@ def filter_bookmarks():
             elif match_type == "OR":
                 # Filter bookmarks that contain at least one tag
                 bookmarks = [b for b in bookmarks if any(tag in b.get("tags", []) for tag in tags_filter)]
+
+        # 🔹 Replace tag IDs with tag names
+        for bookmark in bookmarks:
+            bookmark["tags"] = [tag_map[tag_id] for tag_id in bookmark["tags"] if tag_id in tag_map]
 
         return jsonify({
             "message": "success", 
