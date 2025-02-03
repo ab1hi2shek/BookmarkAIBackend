@@ -45,7 +45,12 @@ def create_bookmark():
         # Save to Firestore
         db.collection(BOOKMARK_COLLECTION).document(bookmark_id).set(bookmark)
 
-        return jsonify({"message": "Bookmark created successfully", "bookmark": bookmark}), 201
+        return jsonify({
+            "message": "Bookmark created successfully", 
+            "data": {
+                "bookmark": bookmark
+            }
+        }), 201
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
     except Exception as e:
@@ -68,7 +73,12 @@ def get_bookmark(bookmark_id):
         if bookmark["userId"] != request.user_id:
             return jsonify({"error": f"User unauthorized to get bookmark with bookmark_id: {bookmark_id}"}), 403
 
-        return jsonify({"message": "success", "bookmark": bookmark}), 200
+        return jsonify({
+            "message": "success", 
+            "data": {
+                "bookmark": bookmark
+            }
+        }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -114,7 +124,12 @@ def update_bookmark(bookmark_id):
         # Update in-memory bookmark for the response
         bookmark.update(updated_fields)
 
-        return jsonify({"message": "Bookmark updated successfully", "bookmark": bookmark}), 200
+        return jsonify({
+            "message": "Bookmark updated successfully", 
+            "data": {
+                "bookmark": bookmark
+            }
+        }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -140,7 +155,12 @@ def delete_bookmark(bookmark_id):
         bookmark["updatedAt"] = datetime.now(timezone.utc).isoformat()
         bookmark_ref.set(bookmark)
 
-        return jsonify({"message": f"Bookmark deleted successfully with bookmark_id: {bookmark_id}"}), 200
+        return jsonify({
+            "message": "Bookmark deleted successfully", 
+            "data": {
+                "bookmarkId": bookmark_id
+            }
+        }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
@@ -165,7 +185,13 @@ def toggle_favorite(bookmark_id):
         bookmark["updatedAt"] = datetime.now(timezone.utc).isoformat()
         bookmark_ref.set(bookmark)
 
-        return jsonify({"message": f"Bookmark favorite set as {bookmark['isFavorite']} with bookmark_id: {bookmark_id}"}), 200
+        return jsonify({
+            "message": "Bookmark favorite set", 
+            "data": {
+                "bookmarkId": bookmark_id,
+                "isFavorite": bookmark['isFavorite']
+            }
+        }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
@@ -194,6 +220,11 @@ def filter_bookmarks():
                 # Filter bookmarks that contain at least one tag
                 bookmarks = [b for b in bookmarks if any(tag in b.get("tags", []) for tag in tags_filter)]
 
-        return jsonify({"message": "success", "bookmarks": bookmarks}), 200
+        return jsonify({
+            "message": "success", 
+            "data": {
+                "bookmarks": bookmarks
+            }
+        }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
