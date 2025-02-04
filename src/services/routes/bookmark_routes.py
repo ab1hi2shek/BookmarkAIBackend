@@ -170,7 +170,7 @@ def delete_bookmark(bookmark_id):
 """
 API to set a bookmark as favorite (or remove) given bookmark_id
 """
-@bookmark_blueprint.route("/bookmark/favorite/<bookmark_id>", methods=["DELETE"])
+@bookmark_blueprint.route("/bookmark/favorite/<bookmark_id>", methods=["POST"])
 @authorize_user
 def toggle_favorite(bookmark_id):
     try:

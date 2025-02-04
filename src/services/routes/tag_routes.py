@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request
 from datetime import datetime, timezone
 from src.utils.init import db
 from src.models.tag_model import TAG_MODEL, TAG_COLLECTION, TAG_CREATOR, TAG_ID_PREFIX
+from src.models.bookmark_model import BOOKMARK_COLLECTION
 from src.utils.routes_util import authorize_user, validate_required_fields, get_id, remove_tag_from_all_bookmarks
 
 # Define a blueprint for the User APIs
@@ -81,6 +82,15 @@ def get_all_tags():
     try:
         tags_query = db.collection(TAG_COLLECTION).where("userId", "==", request.user_id).stream()
         tags = [tag.to_dict() for tag in tags_query]
+
+        # Count bookmarks for each tag dynamically
+        for tag in tags:
+            tag_id = tag["tagId"]
+            bookmarks_query = db.collection(BOOKMARK_COLLECTION)\
+                .where("tags", "array_contains", tag_id)\
+                .where("isDeleted", "==", False)\
+                .stream()
+            tag["bookmarksCount"] = sum(1 for _ in bookmarks_query)
 
         return jsonify({
             "message": "success", 
