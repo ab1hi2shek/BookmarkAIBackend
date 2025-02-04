@@ -36,7 +36,7 @@ def create_user():
             "userId": user_id,
             "name": data.get("name", ""),
             "avatarUrl": data.get("avatarUrl", ""),
-            "email": user_email,
+            "email": data.get("email", ""),
             "createdAt": now,
             "updatedAt": now
         }
