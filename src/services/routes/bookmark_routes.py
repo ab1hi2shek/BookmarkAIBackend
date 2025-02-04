@@ -3,7 +3,7 @@ from flask import Blueprint, jsonify, request
 from src.utils.init import db
 from src.models.bookmark_model import BOOKMARK_MODEL, BOOKMARK_COLLECTION, BOOKMARK_ID_PREFIX
 from src.models.tag_model import TAG_COLLECTION
-from src.utils.routes_util import authorize_user, validate_required_fields, get_id, process_tags
+from src.utils.routes_util import authorize_user, validate_required_fields, get_id, process_tags, fetch_tag_names
 
 # Define a blueprint for the User APIs
 bookmark_blueprint = Blueprint("bookmark_routes", __name__)
@@ -114,15 +114,18 @@ def update_bookmark(bookmark_id):
                 return jsonify({"error": f"Tags provided in request must be a list"}), 400
             # Handle tags
             tag_ids = process_tags(data.get("tags", []), request.user_id)
-            print("haha", tag_ids)
             updated_fields["tags"] = tag_ids
         updated_fields["updatedAt"] = datetime.now(timezone.utc).isoformat()
 
         # Save to Firestore
         bookmark_ref.update(updated_fields)
 
+        # Fetch tag names dynamically
+        tag_names = fetch_tag_names(updated_fields.get("tags", []))
+
         # Update in-memory bookmark for the response
         bookmark.update(updated_fields)
+        bookmark["tags"] = tag_names
 
         return jsonify({
             "message": "Bookmark updated successfully", 

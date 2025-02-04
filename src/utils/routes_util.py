@@ -116,3 +116,12 @@ def remove_tag_from_all_bookmarks(tag_id):
         else:
             # Update tags
             bookmark_doc.reference.update({"tags": updated_tags})
+
+
+def fetch_tag_names(tag_ids):
+    """Fetch tag names from Firestore based on tag IDs"""
+    if not tag_ids:
+        return []
+
+    tag_docs = db.collection(TAG_COLLECTION).where("tagId", "in", tag_ids).stream()
+    return [tag_doc.to_dict().get("tagName", "") for tag_doc in tag_docs if tag_doc.exists]
