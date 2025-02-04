@@ -29,7 +29,7 @@ def create_user():
         # 🔹 Check if the user already exists using userId instead of email
         user_ref = db.collection(USER_COLLECTION).document(user_id)
         if user_ref.get().exists:
-            return jsonify({"error": f"User already exists with userId: {user_id}"}), 409  # 409 = Conflict
+            return jsonify({"message": f"User already exists with userId: {user_id}"}), 200
 
         # 🔹 Create user object
         user = {
