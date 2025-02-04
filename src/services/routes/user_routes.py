@@ -17,7 +17,7 @@ API to create a user.
 def create_user():
     try:
         data = request.json
-        required_fields = ["firstName", "email"]
+        required_fields = ["name", "email"]
         is_valid, message = validate_required_fields(data, required_fields)
 
         if not is_valid:
@@ -34,8 +34,7 @@ def create_user():
         user = USER_MODEL.copy()
         user.update({
             "userId": user_id,
-            "firstName": data["firstName"],
-            "lastName": data.get("lastName", ""),
+            "name": data["name"],
             "avatarUrl": data.get("avatarUrl", ""),
             "email": user_email,
             "createdAt": now,
@@ -79,10 +78,8 @@ def update_user(user_id):
 
         # TODO: Validate these data.
         updated_fields = {}
-        if "firstName" in data:
-            updated_fields["firstName"] = data["firstName"]
-        if "lastName" in data:
-            updated_fields["lastName"] = data["lastName"]
+        if "name" in data:
+            updated_fields["name"] = data["name"]
         if "avatarUrl" in data:
             updated_fields["avatarUrl"] = data["avatarUrl"]
         if "email" in data:

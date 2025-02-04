@@ -4,8 +4,7 @@ USER_ID_PREFIX = "user"
 
 USER_MODEL = {
     "userId": "", # Required
-    "firstName": "", # Required
-    "lastName": "",
+    "name": "", # Required
     "email": "", # Required
     "avatarUrl": "",
     "createdAt": "", # Set by service code.
