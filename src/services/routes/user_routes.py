@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
 from functools import wraps
-from datetime import datetime
+from datetime import datetime, timezone
 from src.utils.init import db
 from src.models.user_model import USER_MODEL, USER_COLLECTION, USER_ID_PREFIX
 from src.models.bookmark_model import BOOKMARK_COLLECTION
@@ -17,33 +17,35 @@ API to create a user.
 def create_user():
     try:
         data = request.json
-        required_fields = ["name", "email"]
+        required_fields = ["userId", "name"]
         is_valid, message = validate_required_fields(data, required_fields)
 
         if not is_valid:
             return jsonify({"error": message}), 400
-        
-        user_email = data.get("email")
-        users_query = db.collection(USER_COLLECTION).where("email", "==", user_email).get()
-        if len(users_query) != 0:
-            return jsonify({"error": f"user already esists with email: {user_email}"}), 500
 
-        user_id = get_id(USER_ID_PREFIX)
-        now = datetime.now().isoformat()
+        user_id = data["userId"]
+        now = datetime.now(timezone.utc).isoformat()
 
-        user = USER_MODEL.copy()
-        user.update({
+        # 🔹 Check if the user already exists using userId instead of email
+        user_ref = db.collection(USER_COLLECTION).document(user_id)
+        if user_ref.get().exists:
+            return jsonify({"error": f"User already exists with userId: {user_id}"}), 409  # 409 = Conflict
+
+        # 🔹 Create user object
+        user = {
             "userId": user_id,
-            "name": data["name"],
+            "name": data.get("name", ""),
             "avatarUrl": data.get("avatarUrl", ""),
             "email": user_email,
             "createdAt": now,
             "updatedAt": now
-        })
+        }
 
-        db.collection(USER_COLLECTION).document(user_id).set(user)
+        # 🔹 Save user to Firestore
+        user_ref.set(user)
 
         return jsonify({"message": "User created successfully", "user": user}), 201
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
