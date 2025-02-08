@@ -231,9 +231,6 @@ def filter_bookmarks_by_tag_ids():
         # Convert comma-separated string to a list
         tag_ids = [tag.strip() for tag in tags_filter.split(",") if tag.strip()]
 
-        if not tag_ids:
-            return jsonify({"message": "No tags provided"}), 400
-
         # Query bookmarks
         bookmarks_query = db.collection(BOOKMARK_COLLECTION)\
             .where("userId", "==", request.user_id)\
