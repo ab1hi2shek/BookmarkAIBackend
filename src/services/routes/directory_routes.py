@@ -84,7 +84,7 @@ def get_all_directories():
         for directory in directories:
             directory_id = directory["directoryId"]
             bookmarks_query = db.collection(BOOKMARK_COLLECTION)\
-                .where("tdirectoryIdags", "==", directory_id)\
+                .where("directoryId", "==", directory_id)\
                 .where("isDeleted", "==", False)\
                 .stream()
             directory["bookmarksCount"] = sum(1 for _ in bookmarks_query)
