@@ -105,4 +105,10 @@ curl -X GET "http://127.0.0.1:5000/api/bookmark/filter-by-tags?match_type=OR&tag
      -H "Content-Type: application/json" \
      -H "userId: omUeLo2YN6N2LUVePtiKvCT9odD2"
 
+# to fetch bookmarks with directory in local
+curl -X GET "http://127.0.0.1:5000/api/directory/all" \
+     -H "Content-Type: application/json" \
+     -H "userId: omUeLo2YN6N2LUVePtiKvCT9odD2"
+
+
 ```

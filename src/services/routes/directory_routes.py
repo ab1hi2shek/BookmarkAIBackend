@@ -80,6 +80,15 @@ def get_all_directories():
 
         directories = [directory.to_dict() for directory in directories_query]
 
+                # Count bookmarks for each tag dynamically
+        for directory in directories:
+            directory_id = directory["directoryId"]
+            bookmarks_query = db.collection(BOOKMARK_COLLECTION)\
+                .where("tdirectoryIdags", "==", directory_id)\
+                .where("isDeleted", "==", False)\
+                .stream()
+            directory["bookmarksCount"] = sum(1 for _ in bookmarks_query)
+
         return jsonify({
             "message": "success",
             "data": {"directories": directories}
