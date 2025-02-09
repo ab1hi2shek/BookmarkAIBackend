@@ -11,6 +11,7 @@ BOOKMARK_MODEL = {
     "notes": "",
     "tags": [],
     "directoryId": "directory-165ee178-7c68-4134-a2f6-9455be8ec55e",  # Default directory
+    "directoryName": "Uncategorized",
     "createdAt": "",
     "updatedAt": "",
     "isDeleted": False,  # for now, implementing soft delete, "isDeleted": True, means it will not show up.
