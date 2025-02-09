@@ -328,18 +328,18 @@ def get_bookmarks_by_filterType(filter_type):
     try:
         # Base Query for user bookmarks that are not deleted
         bookmarks_query = db.collection(BOOKMARK_COLLECTION)\
-            .where("userId", "==", request.user_id)\
-            .where("isDeleted", "==", False)
+            .filter("userId", "==", request.user_id)\
+            .filter("isDeleted", "==", False)
 
         # Apply filter based on filter_type
         if filter_type == "favorite":
-            bookmarks_query = bookmarks_query.where("isFavorite", "==", True)
+            bookmarks_query = bookmarks_query.filter("isFavorite", "==", True)
         elif filter_type == "with_notes":
-            bookmarks_query = bookmarks_query.where("notes", "!=", "")
+            bookmarks_query = bookmarks_query.filter("notes", "!=", "")
         elif filter_type == "without_tags":
-            bookmarks_query = bookmarks_query.where("tags", "==", [])
+            bookmarks_query = bookmarks_query.filter("tags", "==", [])
         elif filter_type == "uncategorized":
-            bookmarks_query = bookmarks_query.where("directoryId", "==", "uncategorized")
+            bookmarks_query = bookmarks_query.filter("directoryId", "==", "uncategorized")
         else:
             return jsonify({"error": f"Invalid filter type: {filter_type}"}), 400
 
