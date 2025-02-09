@@ -212,24 +212,15 @@ def toggle_favorite(bookmark_id):
 """
 API to get bookmarks given tag. This API matches for AND operator of all tags.
 """
-@bookmark_blueprint.route("/bookmark/filter-by-tags", methods=["GET"])
+@bookmark_blueprint.route("/bookmark/all", methods=["GET"])
 @authorize_user
-def filter_bookmarks_by_tag_ids():
+def fetch_all_bookmarks():
     """
-    Fetch bookmarks that match given tag IDs using query parameters.
+    Fetch all bookmarks of user.
     Example usage:
         /bookmark/filter-by-tags?match_type=AND&tags=tag123,tag456
     """
     try:
-        # Get query parameters
-        VALID_MATCH_TYPES = {"AND", "OR"}
-        match_type = request.args.get("match_type", "AND").upper()  # Default is AND
-        if match_type not in VALID_MATCH_TYPES:
-            return jsonify({"error": "Invalid match_type provided. Use 'AND' or 'OR' for 'match_type' param"}), 400
-        tags_filter = request.args.get("tags", "")  # Comma-separated tag IDs
-
-        # Convert comma-separated string to a list
-        tag_ids = [tag.strip() for tag in tags_filter.split(",") if tag.strip()]
 
         # Query bookmarks
         bookmarks_query = db.collection(BOOKMARK_COLLECTION)\
@@ -242,18 +233,45 @@ def filter_bookmarks_by_tag_ids():
         tags_query = db.collection(TAG_COLLECTION).where("userId", "==", request.user_id).stream()
         tag_map = {tag.id: tag.to_dict()["tagName"] for tag in tags_query}  # Convert {tagId: tagName} dict
 
-        # Filter by tags
-        if match_type == "AND":
-            bookmarks = [b for b in bookmarks if all(tag in b.get("tags", []) for tag in tag_ids)]
-        elif match_type == "OR":
-            bookmarks = [b for b in bookmarks if any(tag in b.get("tags", []) for tag in tag_ids)]
+        # Replace tag IDs with tag names
+        for bookmark in bookmarks:
+            bookmark["tags"] = [tag_map[tag_id] for tag_id in bookmark["tags"] if tag_id in tag_map]
+
+        return jsonify({
+            "message": "success fetching all bookmarks of user",
+            "data": {
+                "bookmarks": bookmarks
+            }
+        }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+
+@bookmark_blueprint.route("/bookmark/tag/<tag_id>", methods=["GET"])
+@authorize_user
+def get_bookmarks_by_tagId(tag_id):
+    """
+    Fetch all bookmarks for a given tag ID and resolve tag names.
+    """
+    try:
+        # Query bookmarks that belong to the user and specified directory
+        bookmarks_query = db.collection(BOOKMARK_COLLECTION)\
+            .where("userId", "==", request.user_id)\
+            .where("tags", "array_contains", tag_id)\
+            .where("isDeleted", "==", False)
+
+        bookmarks = [doc.to_dict() for doc in bookmarks_query.stream()]
+
+        # Fetch all tags for the user in a single query
+        tags_query = db.collection(TAG_COLLECTION).where("userId", "==", request.user_id).stream()
+        tag_map = {tag.id: tag.to_dict()["tagName"] for tag in tags_query}  # Convert to {tagId: tagName} dict
 
         # Replace tag IDs with tag names
         for bookmark in bookmarks:
             bookmark["tags"] = [tag_map[tag_id] for tag_id in bookmark["tags"] if tag_id in tag_map]
 
         return jsonify({
-            "message": "success",
+            "message": f"success fetching bookmarks with tagId: {tag_id}",
             "data": {
                 "bookmarks": bookmarks
             }
@@ -265,7 +283,7 @@ def filter_bookmarks_by_tag_ids():
 
 @bookmark_blueprint.route("/bookmark/directory/<directory_id>", methods=["GET"])
 @authorize_user
-def get_bookmarks_by_directory(directory_id):
+def get_bookmarks_by_directoryId(directory_id):
     """
     Fetch all bookmarks for a given directory ID and resolve tag names.
     """
@@ -287,7 +305,7 @@ def get_bookmarks_by_directory(directory_id):
             bookmark["tags"] = [tag_map[tag_id] for tag_id in bookmark["tags"] if tag_id in tag_map]
 
         return jsonify({
-            "message": "success",
+            "message": f"success fetching bookmarks with directory_id: {directory_id}",
             "data": {
                 "bookmarks": bookmarks
             }

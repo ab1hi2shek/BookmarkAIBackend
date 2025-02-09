@@ -38,12 +38,12 @@ python app.py
 
 ## Example Usage
 
+### Local APIs
+
 ```bash
+
 # Create a new user in local
 curl -X POST -H "Content-Type: application/json" -d '{"firstName": "John", "lastName": "Doe", "avatarUrl": "example.com/avatar", "email": "abc3@gmail.com"}' http://127.0.0.1:5002/api/user/create
-
-# Create a new user in vercel
-curl -X POST -H "Content-Type: application/json" -d '{"firstName": "John", "lastName": "Doe", "avatarUrl": "example.com/avatar", "email": "abc3@gmail.com"}' https://bookmark-ai-backend.vercel.app/api/user/create
 
 # create bookmark in local
 curl -X POST http://127.0.0.1:5000/api/bookmark/create \
@@ -54,26 +54,10 @@ curl -X POST http://127.0.0.1:5000/api/bookmark/create \
           "tags": ["reddit", "vancouver"]
          }'
 
-# create bookmark in vercel
-curl -X POST https://bookmark-ai-backend.vercel.app/api/bookmark/create \
+# Fetch all bookmarks in local
+curl -X GET http://127.0.0.1:5000/api/bookmark/all \
      -H "Content-Type: application/json" \
-     -H "userId: omUeLo2YN6N2LUVePtiKvCT9odD2" \
-     -d '{
-          "url": "https://www.reddit.com/r/vancouver/",
-          "tags": ["reddit", "vancouver"]
-         }'
-
-# to fetch all bookmarks in local
-curl -X POST http://127.0.0.1:5000/api/bookmark/filter \
-     -H "Content-Type: application/json" \
-     -H "userId: omUeLo2YN6N2LUVePtiKvCT9odD2" \
-     -d '{}'
-
-# to fetch all bookmarks in vercel
-curl -X POST https://bookmark-ai-backend.vercel.app/api/bookmark/filter \
-     -H "Content-Type: application/json" \
-     -H "userId: omUeLo2YN6N2LUVePtiKvCT9odD2" \
-     -d '{}'
+     -H "userId: omUeLo2YN6N2LUVePtiKvCT9odD2"
 
 # To update a bookmark tags in local
 curl -X POST http://127.0.0.1:5000/api/bookmark/update/bookmark-a8ceaf44-891b-403c-8e35-df363dfb9b2f \
@@ -86,29 +70,51 @@ curl -X POST http://127.0.0.1:5000/api/bookmark/update/bookmark-a8ceaf44-891b-40
 # to fetch all tags in local
 curl -X GET http://127.0.0.1:5000/api/tag/all \
      -H "Content-Type: application/json" \
+     -H "userId: omUeLo2YN6N2LUVePtiKvCT9odD2"
+
+
+# to fetch bookmarks with tagId in local
+curl -X GET "http://127.0.0.1:5000/api/bookmark/tag/tag-e2c6cd22-6371-49a9-9cb8-928b5bbe287b" \
+     -H "Content-Type: application/json" \
+     -H "userId: omUeLo2YN6N2LUVePtiKvCT9odD2"
+
+# to fetch all directories of a user in local
+curl -X GET "http://127.0.0.1:5000/api/directory/all" \
+     -H "Content-Type: application/json" \
+     -H "userId: omUeLo2YN6N2LUVePtiKvCT9odD2"
+
+# to fetch bookmarks with directoryId in local
+curl -X GET "http://127.0.0.1:5000/api/bookmark/directory/directory-56a207d2-edd3-46fb-b935-90095d4263e1" \
+     -H "Content-Type: application/json" \
+     -H "userId: omUeLo2YN6N2LUVePtiKvCT9odD2"
+
+```
+
+### Vercel APIs
+
+```bash
+
+# Create a new user in vercel
+curl -X POST -H "Content-Type: application/json" -d '{"firstName": "John", "lastName": "Doe", "avatarUrl": "example.com/avatar", "email": "abc3@gmail.com"}' https://bookmark-ai-backend.vercel.app/api/user/create
+
+# create bookmark in vercel
+curl -X POST https://bookmark-ai-backend.vercel.app/api/bookmark/create \
+     -H "Content-Type: application/json" \
      -H "userId: omUeLo2YN6N2LUVePtiKvCT9odD2" \
-     -d '{}'
+     -d '{
+          "url": "https://www.reddit.com/r/vancouver/",
+          "tags": ["reddit", "vancouver"]
+         }'
+
+# Fetch all bookmarks in vercel
+curl -X GET https://bookmark-ai-backend.vercel.app/api/bookmark/all \
+     -H "Content-Type: application/json" \
+     -H "userId: omUeLo2YN6N2LUVePtiKvCT9odD2"
 
 # to fetch all tags in vercel
 curl -X GET https://bookmark-ai-backend.vercel.app/api/tag/all \
      -H "Content-Type: application/json" \
      -H "userId: omUeLo2YN6N2LUVePtiKvCT9odD2" \
      -d '{}'
-
-# to fetch bookmarks with tags in local (with default AND)
-curl -X GET "http://127.0.0.1:5000/api/bookmark/filter-by-tags?match_type=AND&tags=tag-e2c6cd22-6371-49a9-9cb8-928b5bbe287b,tag-14102440-601e-4253-b63b-602c2bed1e6a" \
-     -H "Content-Type: application/json" \
-     -H "userId: omUeLo2YN6N2LUVePtiKvCT9odD2"
-
-# to fetch bookmarks with tags in local (with OR)
-curl -X GET "http://127.0.0.1:5000/api/bookmark/filter-by-tags?match_type=OR&tags=tag-e2c6cd22-6371-49a9-9cb8-928b5bbe287b,tag-14102440-601e-4253-b63b-602c2bed1e6a" \
-     -H "Content-Type: application/json" \
-     -H "userId: omUeLo2YN6N2LUVePtiKvCT9odD2"
-
-# to fetch bookmarks with directory in local
-curl -X GET "http://127.0.0.1:5000/api/directory/all" \
-     -H "Content-Type: application/json" \
-     -H "userId: omUeLo2YN6N2LUVePtiKvCT9odD2"
-
 
 ```
