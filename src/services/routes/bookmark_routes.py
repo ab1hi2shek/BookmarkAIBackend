@@ -37,7 +37,7 @@ def create_bookmark():
             "imageUrl": data.get("imageUrl", ""),
             "title": data.get("title", ""),
             "notes": data.get("notes", ""),
-            "directoryId": data.get("directoryId", "directory-165ee178-7c68-4134-a2f6-9455be8ec55e")
+            "directoryId": data.get("directoryId", "directory-165ee178-7c68-4134-a2f6-9455be8ec55e"),
             "tags": tag_ids,
             "createdAt": time_now,
             "updatedAt": time_now,
