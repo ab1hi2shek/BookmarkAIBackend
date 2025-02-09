@@ -312,4 +312,55 @@ def get_bookmarks_by_directoryId(directory_id):
         }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+
+@bookmark_blueprint.route("/bookmark/filter/<filter_type>", methods=["GET"])
+@authorize_user
+def get_bookmarks_by_filterType(filter_type):
+    """
+    Fetch all bookmarks based on filterType and resolve tag names.
+    FilterType can be:
+    1. favorite -> fetch all bookmarks with isFavorite = True
+    2. with_notes -> fetch all bookmarks with notes not empty
+    3. without_tags -> fetch all bookmarks with empty tag list
+    4. uncategorized -> fetch all bookmarks with directoryId = "uncategorized"
+    """
+    try:
+        # Base Query for user bookmarks that are not deleted
+        bookmarks_query = db.collection(BOOKMARK_COLLECTION)\
+            .where("userId", "==", request.user_id)\
+            .where("isDeleted", "==", False)
+
+        # Apply filter based on filter_type
+        if filter_type == "favorite":
+            bookmarks_query = bookmarks_query.where("isFavorite", "==", True)
+        elif filter_type == "with_notes":
+            bookmarks_query = bookmarks_query.where("notes", "!=", "")
+        elif filter_type == "without_tags":
+            bookmarks_query = bookmarks_query.where("tags", "==", [])
+        elif filter_type == "uncategorized":
+            bookmarks_query = bookmarks_query.where("directoryId", "==", "uncategorized")
+        else:
+            return jsonify({"error": f"Invalid filter type: {filter_type}"}), 400
+
+        # Fetch bookmarks
+        bookmarks = [doc.to_dict() for doc in bookmarks_query.stream()]
+
+        # Fetch all tags for the user in a single query
+        tags_query = db.collection(TAG_COLLECTION).where("userId", "==", request.user_id).stream()
+        tag_map = {tag.id: tag.to_dict()["tagName"] for tag in tags_query}  # Convert to {tagId: tagName} dict
+
+        # Replace tag IDs with tag names
+        for bookmark in bookmarks:
+            bookmark["tags"] = [tag_map[tag_id] for tag_id in bookmark["tags"] if tag_id in tag_map]
+
+        return jsonify({
+            "message": f"Success fetching bookmarks with filter: {filter_type}",
+            "data": {
+                "bookmarks": bookmarks
+            }
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
