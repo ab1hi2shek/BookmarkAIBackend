@@ -38,7 +38,6 @@ def create_bookmark():
             "title": data.get("title", ""),
             "notes": "",
             "directoryId": DEFAULT_DIRECTORY_ID,
-            "directoryName": DEFAULT_DIRECTORY_NAME,
             "tags": tag_ids,
             "createdAt": time_now,
             "updatedAt": time_now,
