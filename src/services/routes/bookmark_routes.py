@@ -242,7 +242,7 @@ def fetch_all_bookmarks():
         # Replace tag IDs with tag names & resolve directory names
         for bookmark in bookmarks:
             bookmark["tags"] = [tag_map[tag_id] for tag_id in bookmark["tags"] if tag_id in tag_map]
-            bookmark["directoryName"] = directory_map.get(bookmark.get("directoryId"), "Uncategorized")
+            bookmark["directoryName"] = directory_map.get(bookmark.get("directoryId"), DEFAULT_DIRECTORY_NAME)
 
         return jsonify({
             "message": "success fetching all bookmarks of user",
@@ -280,7 +280,7 @@ def get_bookmarks_by_tagId(tag_id):
         # Replace tag IDs with tag names & resolve directory names
         for bookmark in bookmarks:
             bookmark["tags"] = [tag_map[tag_id] for tag_id in bookmark["tags"] if tag_id in tag_map]
-            bookmark["directoryName"] = directory_map.get(bookmark.get("directoryId"), "Uncategorized")
+            bookmark["directoryName"] = directory_map.get(bookmark.get("directoryId"), DEFAULT_DIRECTORY_NAME)
 
         return jsonify({
             "message": f"success fetching bookmarks with tagId: {tag_id}",
@@ -319,7 +319,7 @@ def get_bookmarks_by_directoryId(directory_id):
         # Replace tag IDs with tag names & resolve directory names
         for bookmark in bookmarks:
             bookmark["tags"] = [tag_map[tag_id] for tag_id in bookmark["tags"] if tag_id in tag_map]
-            bookmark["directoryName"] = directory_map.get(bookmark.get("directoryId"), "Uncategorized")
+            bookmark["directoryName"] = directory_map.get(bookmark.get("directoryId"), DEFAULT_DIRECTORY_NAME)
 
         return jsonify({
             "message": f"success fetching bookmarks with directory_id: {directory_id}",
@@ -369,9 +369,14 @@ def get_bookmarks_by_filterType(filter_type):
         tags_query = db.collection(TAG_COLLECTION).where("userId", "==", request.user_id).stream()
         tag_map = {tag.id: tag.to_dict()["tagName"] for tag in tags_query}  # Convert to {tagId: tagName} dict
 
+        # Fetch all directories for the user
+        directories_query = db.collection(DIRECTORY_COLLECTION).where("userId", "==", request.user_id).stream()
+        directory_map = {directory.id: directory.to_dict()["name"] for directory in directories_query}
+    
         # Replace tag IDs with tag names
         for bookmark in bookmarks:
             bookmark["tags"] = [tag_map[tag_id] for tag_id in bookmark["tags"] if tag_id in tag_map]
+            bookmark["directoryName"] = directory_map.get(bookmark.get("directoryId"), DEFAULT_DIRECTORY_NAME)
 
         return jsonify({
             "message": f"Success fetching bookmarks with filter: {filter_type}",
