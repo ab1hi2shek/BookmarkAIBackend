@@ -3,7 +3,7 @@ from flask import Blueprint, jsonify, request
 from src.utils.init import db
 from src.models.bookmark_model import BOOKMARK_MODEL, BOOKMARK_COLLECTION, BOOKMARK_ID_PREFIX
 from src.models.tag_model import TAG_COLLECTION
-from src.models.directory_model import DIRECTORY_COLLECTION
+from src.models.directory_model import DIRECTORY_COLLECTION, DEFAULT_DIRECTORY_ID, DEFAULT_DIRECTORY_NAME
 from src.utils.routes_util import authorize_user, validate_required_fields, get_id, process_tags, fetch_tag_names
 
 # Define a blueprint for the User APIs
@@ -36,8 +36,9 @@ def create_bookmark():
             "url": data["url"],
             "imageUrl": data.get("imageUrl", ""),
             "title": data.get("title", ""),
-            "notes": data.get("notes", ""),
-            "directoryId": data.get("directoryId", "directory-165ee178-7c68-4134-a2f6-9455be8ec55e"),
+            "notes": "",
+            "directoryId": DEFAULT_DIRECTORY_ID,
+            "directoryName": DEFAULT_DIRECTORY_NAME,
             "tags": tag_ids,
             "createdAt": time_now,
             "updatedAt": time_now,
