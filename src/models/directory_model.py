@@ -10,5 +10,6 @@ DIRECTORY_MODEL = {
     "name": "",  # Required (e.g., "Work", "Personal")
     "createdAt": "",
     "updatedAt": "",
-    "isDeleted": False  # Soft delete support
+    "isDeleted": False,  # Soft delete support,
+    "isModifiable": True # Uncategorized should not be deleted/edited
 }

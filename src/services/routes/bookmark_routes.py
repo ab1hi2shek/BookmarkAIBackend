@@ -348,7 +348,9 @@ def get_bookmarks_by_filterType(filter_type):
             .where("isDeleted", "==", False)
 
         # Apply filter based on filter_type
-        if filter_type == "favorite":
+        if filter_type == "all":
+            bookmarks_query = bookmarks_query
+        elif filter_type == "favorite":
             bookmarks_query = bookmarks_query.where("isFavorite", "==", True)
         elif filter_type == "with_notes":
             bookmarks_query = bookmarks_query.where("notes", "!=", "")
