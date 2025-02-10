@@ -357,7 +357,7 @@ def get_bookmarks_by_filterType(filter_type):
         elif filter_type == "without_tags":
             bookmarks_query = bookmarks_query.where("tags", "==", [])
         elif filter_type == "uncategorized":
-            bookmarks_query = bookmarks_query.where("directoryId", "==", "uncategorized")
+            bookmarks_query = bookmarks_query.where("directoryId", "==", "directory-165ee178-7c68-4134-a2f6-9455be8ec55e")
         else:
             return jsonify({"error": f"Invalid filter type: {filter_type}"}), 400
 
