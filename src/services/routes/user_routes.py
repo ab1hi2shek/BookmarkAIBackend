@@ -24,7 +24,7 @@ def create_user():
             return jsonify({"error": message}), 400
 
         user_id = data["userId"]
-        now = datetime.now(timezone.utc).isoformat()
+        now = int(datetime.now(timezone.utc).timestamp())
 
         # 🔹 Check if the user already exists using userId instead of email
         user_ref = db.collection(USER_COLLECTION).document(user_id)
@@ -86,7 +86,7 @@ def update_user(user_id):
             updated_fields["avatarUrl"] = data["avatarUrl"]
         if "email" in data:
             updated_fields["email"] = data["email"]
-        updated_fields["updatedAt"] = datetime.now().isoformat()
+        updated_fields["updatedAt"] = datetime.now().timestamp()
 
         # Save to firehose.
         user_ref.update(updated_fields)

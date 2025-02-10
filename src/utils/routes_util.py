@@ -68,7 +68,7 @@ def process_tags(tag_names, user_id):
     if not isinstance(tag_names, list):
         raise ValueError("Tags must be a list of strings.")
 
-    time_now = datetime.now(timezone.utc).isoformat()
+    time_now = int(datetime.now(timezone.utc).timestamp())
     tag_ids = []
 
     for tag_name in tag_names:
@@ -110,7 +110,12 @@ def remove_tag_from_all_bookmarks(tag_id):
         bookmark = bookmark_doc.to_dict()
         updated_tags = [tid for tid in bookmark["tags"] if tid != tag_id]
 
-        bookmark_doc.reference.update({"tags": updated_tags})
+        if not updated_tags:
+            # If no tags left, delete the bookmark
+            bookmark_doc.reference.update({"isDeleted": True})
+        else:
+            # Update tags
+            bookmark_doc.reference.update({"tags": updated_tags})
 
 
 def fetch_tag_names(tag_ids):

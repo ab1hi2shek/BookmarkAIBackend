@@ -1,5 +1,6 @@
-BOOKMARK_COLLECTION = "bookmarks"
+from src.models.directory_model import DEFAULT_DIRECTORY_ID, DEFAULT_DIRECTORY_NAME
 
+BOOKMARK_COLLECTION = "bookmarks"
 BOOKMARK_ID_PREFIX = "bookmark"
 
 BOOKMARK_MODEL = {
@@ -10,8 +11,8 @@ BOOKMARK_MODEL = {
     "title": "",
     "notes": "",
     "tags": [],
-    "directoryId": "directory-165ee178-7c68-4134-a2f6-9455be8ec55e",  # Default directory
-    "directoryName": "Uncategorized",
+    "directoryId": DEFAULT_DIRECTORY_ID,  # Default directory
+    "directoryName": DEFAULT_DIRECTORY_NAME,
     "createdAt": "",
     "updatedAt": "",
     "isDeleted": False,  # for now, implementing soft delete, "isDeleted": True, means it will not show up.

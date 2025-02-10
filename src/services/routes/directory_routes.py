@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from flask import Blueprint, jsonify, request
 from src.utils.init import db
 from src.models.bookmark_model import BOOKMARK_COLLECTION
-from src.models.directory_model import DIRECTORY_COLLECTION, DIRECTORY_MODEL, DIRECTORY_ID_PREFIX
+from src.models.directory_model import DIRECTORY_COLLECTION, DIRECTORY_MODEL, DIRECTORY_ID_PREFIX, DEFAULT_DIRECTORY_ID, DEFAULT_DIRECTORY_NAME
 from src.utils.routes_util import authorize_user, validate_required_fields, get_id
 
 # Define a blueprint for the User APIs
@@ -20,7 +20,7 @@ def create_directory():
             return jsonify({"error": message}), 400
 
         directory_id = get_id(DIRECTORY_ID_PREFIX)
-        time_now = datetime.now(timezone.utc).isoformat()
+        time_now = int(datetime.now(timezone.utc).timestamp())
 
         directory = DIRECTORY_MODEL.copy()
         directory.update({
@@ -56,7 +56,7 @@ def rename_directory(directory_id):
         if directory["userId"] != request.user_id:
             return jsonify({"error": "Unauthorized"}), 403
 
-        updated_fields = {"name": data["name"], "updatedAt": datetime.now(timezone.utc).isoformat()}
+        updated_fields = {"name": data["name"], "updatedAt": int(datetime.now(timezone.utc).timestamp())}
         directory_ref.update(updated_fields)
 
         return jsonify({
@@ -119,23 +119,37 @@ def delete_directory(directory_id):
             return jsonify({"error": "Unauthorized"}), 403
 
         # Mark directory as deleted
-        directory_ref.update({"isDeleted": True, "updatedAt": datetime.now(timezone.utc).isoformat()})
+        directory_ref.update({"isDeleted": True, "updatedAt": int(datetime.now(timezone.utc).timestamp())})
 
         bookmarks_query = db.collection(BOOKMARK_COLLECTION).where("directoryId", "==", directory_id).stream()
 
         if move_bookmarks:
             # Move all bookmarks to "Uncategorized"
             for bookmark in bookmarks_query:
-                bookmark.reference.update({"directoryId": "uncategorized", "updatedAt": datetime.now(timezone.utc).isoformat()})
+                bookmark.reference.update({
+                    "directoryId": DEFAULT_DIRECTORY_ID,
+                    "directoryName": DEFAULT_DIRECTORY_NAME,
+                    "updatedAt": int(datetime.now(timezone.utc).timestamp())
+                })
             return jsonify({
                 "message": "Directory deleted, bookmarks moved to Uncategorized",
+                "data": {
+                    "directory_id": directory_id,
+                    "move_bookmarks": move_bookmarks,
+
+                }
             }), 200
         else:
             # Permanently delete all bookmarks in the directory
             for bookmark in bookmarks_query:
-                bookmark.reference.update({"isDeleted": True, "updatedAt": datetime.now(timezone.utc).isoformat()})
+                bookmark.reference.update({"isDeleted": True, "updatedAt": int(datetime.now(timezone.utc).timestamp())})
             return jsonify({
-                "message": "Directory and all bookmarks deleted"
+                "message": "Directory and all bookmarks deleted",
+                "data": {
+                    "directory_id": directory_id,
+                    "move_bookmarks": move_bookmarks,
+                    
+                }
             }), 200
 
     except Exception as e:

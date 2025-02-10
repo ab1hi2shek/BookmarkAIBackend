@@ -23,7 +23,7 @@ def create_tag():
             return jsonify({"error": message}), 400
 
         tagId = get_id(TAG_ID_PREFIX)
-        now = datetime.now(timezone.utc).isoformat()
+        now = int(datetime.now(timezone.utc).timestamp())
 
         tag = TAG_MODEL.copy()
         tag.update({
@@ -126,7 +126,7 @@ def update_tag(tag_id):
         updated_fields = {}
         if "tagName" in data:
             updated_fields["tagName"] = data["tagName"]
-        updated_fields["updatedAt"] = datetime.now(timezone.utc).isoformat()
+        updated_fields["updatedAt"] = int(datetime.now(timezone.utc).timestamp())
         
         # Save to firehose.
         tag_ref.update(updated_fields)

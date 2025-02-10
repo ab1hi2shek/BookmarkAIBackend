@@ -24,7 +24,7 @@ def create_bookmark():
             return jsonify({"error": message}), 400
 
         bookmark_id = get_id(BOOKMARK_ID_PREFIX)
-        time_now = datetime.now(timezone.utc).isoformat()
+        time_now = int(datetime.now(timezone.utc).timestamp())
 
         # Handle tags
         tag_ids = process_tags(data.get("tags", []), request.user_id)
@@ -126,7 +126,7 @@ def update_bookmark(bookmark_id):
 
             updated_fields["directoryId"] = data["directoryId"]
 
-        updated_fields["updatedAt"] = datetime.now(timezone.utc).isoformat()
+        updated_fields["updatedAt"] = int(datetime.now(timezone.utc).timestamp())
 
         # Save to Firestore
         bookmark_ref.update(updated_fields)
@@ -166,7 +166,7 @@ def delete_bookmark(bookmark_id):
 
         # Update Firestore document
         bookmark["isDeleted"] = True
-        bookmark["updatedAt"] = datetime.now(timezone.utc).isoformat()
+        bookmark["updatedAt"] = int(datetime.now(timezone.utc).timestamp())
         bookmark_ref.set(bookmark)
 
         return jsonify({
@@ -196,7 +196,7 @@ def toggle_favorite(bookmark_id):
 
         # Update Firestore document
         bookmark["isFavorite"] = not bookmark["isFavorite"]
-        bookmark["updatedAt"] = datetime.now(timezone.utc).isoformat()
+        bookmark["updatedAt"] = int(datetime.now(timezone.utc).timestamp())
         bookmark_ref.set(bookmark)
 
         return jsonify({
