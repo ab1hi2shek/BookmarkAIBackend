@@ -3,7 +3,7 @@ from flask import Blueprint, jsonify, request
 from src.utils.init import db
 from src.models.bookmark_model import BOOKMARK_MODEL, BOOKMARK_COLLECTION, BOOKMARK_ID_PREFIX
 from src.models.tag_model import TAG_COLLECTION
-from src.models.directory_model import DIRECTORY_COLLECTION, DEFAULT_DIRECTORY_ID, DEFAULT_DIRECTORY_NAME
+from src.models.directory_model import DIRECTORY_COLLECTION, DEFAULT_DIRECTORY_NAME_AND_ID
 from src.utils.routes_util import authorize_user, validate_required_fields, get_id, process_tags, fetch_tag_names
 
 # Define a blueprint for the User APIs
@@ -37,7 +37,7 @@ def create_bookmark():
             "imageUrl": data.get("imageUrl", ""),
             "title": data.get("title", ""),
             "notes": "",
-            "directoryId": DEFAULT_DIRECTORY_ID,
+            "directoryId": DEFAULT_DIRECTORY_NAME_AND_ID,
             "tags": tag_ids,
             "createdAt": time_now,
             "updatedAt": time_now,
@@ -118,11 +118,12 @@ def update_bookmark(bookmark_id):
             tag_ids = process_tags(data.get("tags", []), request.user_id)
             updated_fields["tags"] = tag_ids
         if "directoryId" in data:
-            directory_ref = db.collection(DIRECTORY_COLLECTION).document(data["directoryId"])
-            directory = directory_ref.get().to_dict()
+            if data["directoryId"] != DEFAULT_DIRECTORY_NAME_AND_ID:
+                directory_ref = db.collection(DIRECTORY_COLLECTION).document(data["directoryId"])
+                directory = directory_ref.get().to_dict()
 
-            if not directory or directory.get("isDeleted"):
-                return jsonify({"error": "Directory not found or deleted"}), 404
+                if not directory or directory.get("isDeleted"):
+                    return jsonify({"error": "Directory not found or deleted"}), 404
 
             updated_fields["directoryId"] = data["directoryId"]
 
@@ -241,7 +242,7 @@ def fetch_all_bookmarks():
         # Replace tag IDs with tag names & resolve directory names
         for bookmark in bookmarks:
             bookmark["tags"] = [tag_map[tag_id] for tag_id in bookmark["tags"] if tag_id in tag_map]
-            bookmark["directoryName"] = directory_map.get(bookmark.get("directoryId"), DEFAULT_DIRECTORY_NAME)
+            bookmark["directoryName"] = directory_map.get(bookmark.get("directoryId"), DEFAULT_DIRECTORY_NAME_AND_ID)
 
         return jsonify({
             "message": "success fetching all bookmarks of user",
@@ -279,7 +280,7 @@ def get_bookmarks_by_tagId(tag_id):
         # Replace tag IDs with tag names & resolve directory names
         for bookmark in bookmarks:
             bookmark["tags"] = [tag_map[tag_id] for tag_id in bookmark["tags"] if tag_id in tag_map]
-            bookmark["directoryName"] = directory_map.get(bookmark.get("directoryId"), DEFAULT_DIRECTORY_NAME)
+            bookmark["directoryName"] = directory_map.get(bookmark.get("directoryId"), DEFAULT_DIRECTORY_NAME_AND_ID)
 
         return jsonify({
             "message": f"success fetching bookmarks with tagId: {tag_id}",
@@ -318,7 +319,7 @@ def get_bookmarks_by_directoryId(directory_id):
         # Replace tag IDs with tag names & resolve directory names
         for bookmark in bookmarks:
             bookmark["tags"] = [tag_map[tag_id] for tag_id in bookmark["tags"] if tag_id in tag_map]
-            bookmark["directoryName"] = directory_map.get(bookmark.get("directoryId"), DEFAULT_DIRECTORY_NAME)
+            bookmark["directoryName"] = directory_map.get(bookmark.get("directoryId"), DEFAULT_DIRECTORY_NAME_AND_ID)
 
         return jsonify({
             "message": f"success fetching bookmarks with directory_id: {directory_id}",
@@ -357,7 +358,7 @@ def get_bookmarks_by_filterType(filter_type):
         elif filter_type == "without_tags":
             bookmarks_query = bookmarks_query.where("tags", "==", [])
         elif filter_type == "uncategorized":
-            bookmarks_query = bookmarks_query.where("directoryId", "==", DEFAULT_DIRECTORY_ID)
+            bookmarks_query = bookmarks_query.where("directoryId", "==", DEFAULT_DIRECTORY_NAME_AND_ID)
         else:
             return jsonify({"error": f"Invalid filter type: {filter_type}"}), 400
 
@@ -375,7 +376,7 @@ def get_bookmarks_by_filterType(filter_type):
         # Replace tag IDs with tag names
         for bookmark in bookmarks:
             bookmark["tags"] = [tag_map[tag_id] for tag_id in bookmark["tags"] if tag_id in tag_map]
-            bookmark["directoryName"] = directory_map.get(bookmark.get("directoryId"), DEFAULT_DIRECTORY_NAME)
+            bookmark["directoryName"] = directory_map.get(bookmark.get("directoryId"), DEFAULT_DIRECTORY_NAME_AND_ID)
 
         return jsonify({
             "message": f"Success fetching bookmarks with filter: {filter_type}",

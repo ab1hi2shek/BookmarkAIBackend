@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from flask import Blueprint, jsonify, request
 from src.utils.init import db
 from src.models.bookmark_model import BOOKMARK_COLLECTION
-from src.models.directory_model import DIRECTORY_COLLECTION, DIRECTORY_MODEL, DIRECTORY_ID_PREFIX, DEFAULT_DIRECTORY_ID, DEFAULT_DIRECTORY_NAME
+from src.models.directory_model import DIRECTORY_COLLECTION, DIRECTORY_MODEL, DIRECTORY_ID_PREFIX, DEFAULT_DIRECTORY_NAME_AND_ID
 from src.utils.routes_util import authorize_user, validate_required_fields, get_id
 
 # Define a blueprint for the User APIs
@@ -127,8 +127,7 @@ def delete_directory(directory_id):
             # Move all bookmarks to "Uncategorized"
             for bookmark in bookmarks_query:
                 bookmark.reference.update({
-                    "directoryId": DEFAULT_DIRECTORY_ID,
-                    "directoryName": DEFAULT_DIRECTORY_NAME,
+                    "directoryId": DEFAULT_DIRECTORY_NAME_AND_ID,
                     "updatedAt": int(datetime.now(timezone.utc).timestamp())
                 })
             return jsonify({
