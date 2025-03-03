@@ -1,12 +1,11 @@
 import os
-from openai import OpenAI
 from src.utils.tagGeneration.fetch_page_content import fetch_page_content
 from src.models.tag_model import TAG_CREATOR
+import requests
 
 # Initialize OpenAI client correctly
 local_api_key = "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"
-api_key = os.getenv("OPENAI_API_KEY") if os.getenv("VERCEL") == "1" else local_api_key
-client = OpenAI(api_key=api_key, base_url="https://api.perplexity.ai")
+PERPLEXITY_API_KEY = os.getenv("OPENAI_API_KEY", local_api_key)
 
 TAG_COUNT = 10
 
@@ -20,18 +19,15 @@ def generate_tags(url, title, content, allUserTags):
 
     print(prompt)
 
-    # Correct API call using the OpenAI client
-    response = client.chat.completions.create(
-        model="sonar",
-        messages=[{"role": "user", "content": prompt}],
-        max_tokens=100
+    # Correct API call using perplexity
+    response = requests.post(
+        "https://api.perplexity.ai/chat/completions",
+        headers={"Authorization": f"Bearer {PERPLEXITY_API_KEY}", "Content-Type": "application/json"},
+        json={"model": "sonar", "messages": [{"role": "user", "content": prompt}], "max_tokens": 100}
     )
 
     # Parse the response
-    tags = response.choices[0].message.content.split(",")
-
-    for res in response:
-        print(res)
+    tags = response.json().get("choices", [])[0].get("message", {}).get("content", "").split(",")
     return [tag.strip() for tag in tags]
 
 
