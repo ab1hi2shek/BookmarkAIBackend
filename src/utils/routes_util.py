@@ -55,7 +55,7 @@ def get_id(prefix):
     Process tag names to get or create tag IDs.
 
     Args:
-        tags (list): List of tags.
+        tags (list): List of tag names.
         user_id (str): The ID of the user creating/updating the bookmark.
 
     Returns:
@@ -71,8 +71,7 @@ def process_tags(tags, user_id):
     time_now = int(datetime.now(timezone.utc).timestamp())
     tag_ids = []
 
-    for tag in tags:
-        tag_name = tag["tagName"] # Reference TAG_MODEL from tag_model.py
+    for tag_name in tags:
         # Check if tag exists for the user
         tag_query = db.collection(TAG_COLLECTION)\
             .where("tagName", "==", tag_name)\
@@ -83,12 +82,11 @@ def process_tags(tags, user_id):
             tag_id = tag_query[0].id
         else:
             # Create new tag
-            creator = tag.get["creator"] # Reference TAG_MODEL from tag_model.py
             tag_id = get_id(TAG_ID_PREFIX)
             tag_data = {
                 "tagId": tag_id,
                 "tagName": tag_name,
-                "creator": creator,
+                "creator": TAG_CREATOR.USER.value, # TODO - Different types of tag handling
                 "userId": user_id,
                 "createdAt": time_now
             }
