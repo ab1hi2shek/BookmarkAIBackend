@@ -128,9 +128,8 @@ def update_tag(tag_id):
         updated_fields = {}
         if "tagName" in data:
             updated_fields["tagName"] = data["tagName"]
-            # Change creator to user if user is updating the generated tag name.
-            if tag["creator"] == TAG_CREATOR.SERVICE.value:
-                updated_fields["creator"] = TAG_CREATOR.USER.value
+            # Change creator to user as it is updated by user
+            updated_fields["creator"] = TAG_CREATOR.USER.value
         updated_fields["updatedAt"] = int(datetime.now(timezone.utc).timestamp())
         
         # Save to firehose.
