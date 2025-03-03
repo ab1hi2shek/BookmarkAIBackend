@@ -1,9 +1,11 @@
 from flask import Blueprint, jsonify, request
+import traceback
 from datetime import datetime, timezone
 from src.utils.init import db
 from src.models.tag_model import TAG_MODEL, TAG_COLLECTION, TAG_CREATOR, TAG_ID_PREFIX
 from src.models.bookmark_model import BOOKMARK_COLLECTION
 from src.utils.routes_util import authorize_user, validate_required_fields, get_id, remove_tag_from_all_bookmarks
+from src.utils.tagGeneration.generate_tags import generate_tags
 
 # Define a blueprint for the User APIs
 tags_blueprint = Blueprint("tags_routes", __name__)
@@ -28,7 +30,7 @@ def create_tag():
         tag = TAG_MODEL.copy()
         tag.update({
             "tagId": tagId,
-            "tagName": request.user_id,
+            "tagName": data["tagName"],
             "creator": TAG_CREATOR.USER.value,
             "userId": request.user_id,
             "createdAt": now
@@ -70,7 +72,7 @@ def get_tag(tag_id):
             }
         }), 200
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": str(e), "traceback": traceback.format_exc()}), 500
     
 
 """
@@ -99,7 +101,7 @@ def get_all_tags():
             }
         }), 200
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": str(e), "traceback": traceback.format_exc()}), 500
     
 
 """
@@ -126,6 +128,9 @@ def update_tag(tag_id):
         updated_fields = {}
         if "tagName" in data:
             updated_fields["tagName"] = data["tagName"]
+            # Change creator to user if user is updating the generated tag name.
+            if tag["creator"] == TAG_CREATOR.SERVICE.value:
+                updated_fields["creator"] = TAG_CREATOR.USER.value
         updated_fields["updatedAt"] = int(datetime.now(timezone.utc).timestamp())
         
         # Save to firehose.
@@ -139,7 +144,7 @@ def update_tag(tag_id):
             }
         }), 200
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": str(e), "traceback": traceback.format_exc()}), 500
 
 
 """
@@ -171,4 +176,50 @@ def delete_tag(tag_id):
             }
         }), 200
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": str(e), "traceback": traceback.format_exc()}), 500
+    
+
+"""
+API to get AI generated tags for user
+"""
+@tags_blueprint.route("/tag/generate", methods=["POST"])
+@authorize_user
+def generated_ai_tags():
+    try:
+        data = request.json
+        required_fields = ["bookmarkId"]
+        is_valid, message = validate_required_fields(data, required_fields)
+
+        if not is_valid:
+            return jsonify({"error": message}), 400
+        
+        bookmark_id = data["bookmarkId"]
+        bookmark_ref = db.collection(BOOKMARK_COLLECTION).document(bookmark_id)
+        bookmark = bookmark_ref.get().to_dict()
+
+        # If tag already exists, return it.
+        if len(bookmark.get("generatedTags", [])) != 0:
+            return jsonify({
+                "message": "Tags already exist", 
+                "data": {
+                    "generatedTags": bookmark["generatedTags"]
+                }
+            }), 200
+
+        tags_query = db.collection(TAG_COLLECTION).where("userId", "==", request.user_id).stream()
+        allUserTags = [tag.to_dict() for tag in tags_query]
+        generatedTags = generate_tags(bookmark, allUserTags)
+
+        updated_fields = {}
+        updated_fields["generatedTags"] = generatedTags
+        bookmark_ref.update(updated_fields)
+
+        return jsonify({
+            "message": "Tags successfully generated and saved", 
+            "data": {
+                "generatedTags": generatedTags
+            }
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e), "traceback": traceback.format_exc()}), 500

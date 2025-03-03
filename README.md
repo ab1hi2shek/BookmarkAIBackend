@@ -21,7 +21,7 @@ pip install flask firebase-admin
 5. Run the application:
 
 ```bash
-python app.py
+python index.py
 ```
 
 ## API Endpoints

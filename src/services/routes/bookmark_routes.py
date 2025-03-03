@@ -1,10 +1,12 @@
 from datetime import datetime, timezone
+import traceback
 from flask import Blueprint, jsonify, request
 from src.utils.init import db
 from src.models.bookmark_model import BOOKMARK_MODEL, BOOKMARK_COLLECTION, BOOKMARK_ID_PREFIX
 from src.models.tag_model import TAG_COLLECTION
 from src.models.directory_model import DIRECTORY_COLLECTION, DEFAULT_DIRECTORY_NAME_AND_ID
 from src.utils.routes_util import authorize_user, validate_required_fields, get_id, process_tags, fetch_tag_names
+from src.utils.tagGeneration.fetch_page_content import fetch_page_content
 
 # Define a blueprint for the User APIs
 bookmark_blueprint = Blueprint("bookmark_routes", __name__)
@@ -26,23 +28,26 @@ def create_bookmark():
         bookmark_id = get_id(BOOKMARK_ID_PREFIX)
         time_now = int(datetime.now(timezone.utc).timestamp())
 
-        # Handle tags
-        tag_ids = process_tags(data.get("tags", []), request.user_id)
+        url = data["url"]
+        page_content = fetch_page_content(url)
+        print(page_content)
 
         bookmark = BOOKMARK_MODEL.copy()
         bookmark.update({
             "bookmarkId": bookmark_id,
             "userId": request.user_id,
-            "url": data["url"],
+            "url": url,
             "imageUrl": data.get("imageUrl", ""),
-            "title": data.get("title", ""),
+            "title": page_content["title"],
             "notes": "",
             "directoryId": DEFAULT_DIRECTORY_NAME_AND_ID,
-            "tags": tag_ids,
+            "tags": [],
             "createdAt": time_now,
             "updatedAt": time_now,
             "isDeleted": False,
-            "isFavorite": False
+            "isFavorite": False,
+            "fetchedContent": page_content["content"],
+            "generatedTags": []
         })
 
         # Save to Firestore
@@ -55,9 +60,9 @@ def create_bookmark():
             }
         }), 201
     except ValueError as e:
-        return jsonify({"error": str(e)}), 400
+        return jsonify({"error": str(e), "traceback": traceback.format_exc()}), 400
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": str(e), "traceback": traceback.format_exc()}), 500
 
 
 """
@@ -84,7 +89,6 @@ def get_bookmark(bookmark_id):
         }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 
 """

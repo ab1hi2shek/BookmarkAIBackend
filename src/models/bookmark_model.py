@@ -15,5 +15,8 @@ BOOKMARK_MODEL = {
     "createdAt": "",
     "updatedAt": "",
     "isDeleted": False,  # for now, implementing soft delete, "isDeleted": True, means it will not show up.
-    "isFavorite": False
+    "isFavorite": False,
+
+    "fetchedContent": "",
+    "generatedTags": "",
 }
