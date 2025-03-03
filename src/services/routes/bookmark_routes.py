@@ -7,6 +7,7 @@ from src.models.tag_model import TAG_COLLECTION
 from src.models.directory_model import DIRECTORY_COLLECTION, DEFAULT_DIRECTORY_NAME_AND_ID
 from src.utils.routes_util import authorize_user, validate_required_fields, get_id, process_tags, fetch_tag_names
 from src.utils.tagGeneration.fetch_page_content import fetch_page_content
+from src.utils.tagGeneration.generate_tags import generate_tags
 
 # Define a blueprint for the User APIs
 bookmark_blueprint = Blueprint("bookmark_routes", __name__)
@@ -30,7 +31,15 @@ def create_bookmark():
 
         url = data["url"]
         page_content = fetch_page_content(url)
-        print(page_content)
+
+        tags_query = db.collection(TAG_COLLECTION).where("userId", "==", request.user_id).stream()
+        allUserTags = [tag.to_dict() for tag in tags_query]
+        generatedTags = generate_tags(
+            url, 
+            page_content["title"],
+            page_content["content"], 
+            allUserTags
+        )
 
         bookmark = BOOKMARK_MODEL.copy()
         bookmark.update({
@@ -47,7 +56,7 @@ def create_bookmark():
             "isDeleted": False,
             "isFavorite": False,
             "fetchedContent": page_content["content"],
-            "generatedTags": []
+            "generatedTags": generatedTags
         })
 
         # Save to Firestore

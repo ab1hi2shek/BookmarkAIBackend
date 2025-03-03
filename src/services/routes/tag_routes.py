@@ -207,7 +207,12 @@ def generated_ai_tags():
 
         tags_query = db.collection(TAG_COLLECTION).where("userId", "==", request.user_id).stream()
         allUserTags = [tag.to_dict() for tag in tags_query]
-        generatedTags = generate_tags(bookmark, allUserTags)
+        generatedTags = generate_tags(
+            bookmark["url"], 
+            bookmark.get("title", ""),
+            bookmark.get("fetchedContent", ""), 
+            allUserTags
+        )
 
         updated_fields = {}
         updated_fields["generatedTags"] = generatedTags

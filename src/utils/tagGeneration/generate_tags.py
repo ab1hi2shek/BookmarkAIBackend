@@ -8,12 +8,9 @@ local_api_key = "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"
 api_key = os.getenv("OPENAI_API_KEY") if os.getenv("VERCEL") == "1" else local_api_key
 client = OpenAI(api_key=api_key, base_url="https://api.perplexity.ai")
 
-TAG_COUNT = 6
+TAG_COUNT = 10
 
-def generate_tags(bookmark, allUserTags):
-    url = bookmark["url"]
-    title = bookmark.get("title", "")
-    content = bookmark.get("fetchedContent", "None")
+def generate_tags(url, title, content, allUserTags):
 
     if not url:
         return ["Could not get url"]
@@ -21,11 +18,13 @@ def generate_tags(bookmark, allUserTags):
     suggested_selected_tag_list, user_tag_list = get_user_and_selected_tags(allUserTags)
     prompt = generate_prompt(title, content, user_tag_list, suggested_selected_tag_list, url)
 
+    print(prompt)
+
     # Correct API call using the OpenAI client
     response = client.chat.completions.create(
         model="sonar",
         messages=[{"role": "user", "content": prompt}],
-        max_tokens=50
+        max_tokens=100
     )
 
     # Parse the response
@@ -48,7 +47,7 @@ def generate_prompt(title, content, user_tags, suggested_selected_tags, url):
     
     The user has liked these tags (they have selected these in past): {', '.join(suggested_selected_tags)}
 
-    Provide only the tags, separated by commas. Each tag should be unique and formatted as a single word or a multiword phrase joined by underscores (e.g., machine_learning, deep_learning).
+    Provide only the tags, separated by commas. Generate relevant tags, prioritizing single-word tags. If a concept requires more clarity, use multiword tags joined by underscores (e.g., machine_learning). Ensure a balanced mix of single and multiword tags.
     """
 
 def get_user_and_selected_tags(user_tags):
