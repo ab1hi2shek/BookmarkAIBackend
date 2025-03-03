@@ -37,7 +37,7 @@ def create_bookmark():
             "bookmarkId": bookmark_id,
             "userId": request.user_id,
             "url": url,
-            "imageUrl": data.get("imageUrl", ""),
+            "imageUrl": page_content["image"],
             "title": page_content["title"],
             "notes": "",
             "directoryId": DEFAULT_DIRECTORY_NAME_AND_ID,
