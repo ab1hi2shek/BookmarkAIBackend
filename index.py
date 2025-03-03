@@ -10,7 +10,7 @@ ON_VERCEL = os.getenv("VERCEL") == "1"
 app = create_app()
 
 # Enable CORS for all origins
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True, methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
 
 PORT = 5002
 
