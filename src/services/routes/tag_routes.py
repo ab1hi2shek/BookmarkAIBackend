@@ -212,6 +212,7 @@ def generated_ai_tags():
 
         updated_fields = {}
         updated_fields["generatedTags"] = generatedTags
+        updated_fields["updatedAt"] = int(datetime.now(timezone.utc).timestamp())
         bookmark_ref.update(updated_fields)
 
         return jsonify({
