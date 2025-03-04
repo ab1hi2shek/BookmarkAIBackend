@@ -2,27 +2,20 @@ import os
 from src.utils.tagGeneration.fetch_page_content import fetch_page_content
 from src.models.tag_model import TAG_CREATOR
 import requests
+from dotenv import load_dotenv
 
-# Initialize OpenAI client correctly
-local_api_key = "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"
-PERPLEXITY_API_KEY = os.getenv("OPENAI_API_KEY", local_api_key)
-
-TAG_COUNT = 10
-
-def generate_tags(url, title, content, allUserTags):
+def generate_tags(tag_count, url, title, content, allUserTags):
 
     if not url:
         return ["Could not get url"]
 
     suggested_selected_tag_list, user_tag_list = get_user_and_selected_tags(allUserTags)
-    prompt = generate_prompt(title, content, user_tag_list, suggested_selected_tag_list, url)
-
-    print(prompt)
+    prompt = generate_prompt(tag_count, title, content, user_tag_list, suggested_selected_tag_list, url)
 
     # Correct API call using perplexity
     response = requests.post(
         "https://api.perplexity.ai/chat/completions",
-        headers={"Authorization": f"Bearer {PERPLEXITY_API_KEY}", "Content-Type": "application/json"},
+        headers={"Authorization": f"Bearer {get_api_key()}", "Content-Type": "application/json"},
         json={"model": "sonar", "messages": [{"role": "user", "content": prompt}], "max_tokens": 100}
     )
 
@@ -30,10 +23,21 @@ def generate_tags(url, title, content, allUserTags):
     tags = response.json().get("choices", [])[0].get("message", {}).get("content", "").split(",")
     return [tag.strip() for tag in tags]
 
+def get_api_key():
+    """Load API key from environment variables or .env file"""
+    
+    # ✅ Load .env only in local development (not on Vercel)
+    if os.getenv("VERCEL") != "1":
+        env_loaded = load_dotenv()
+        if not env_loaded:
+            print("❌ Failed to load .env file!")
 
-def generate_prompt(title, content, user_tags, suggested_selected_tags, url):
+    return os.getenv("PERPLEXITY_API_KEY")
+
+
+def generate_prompt(tag_count, title, content, user_tags, suggested_selected_tags, url):
     return f"""
-    Generate exactly {TAG_COUNT} relevant tags for a bookmark based on the following details:
+    Generate exactly {tag_count} relevant tags for a bookmark based on the following details:
     
     Url: {url}
     Title: {title}

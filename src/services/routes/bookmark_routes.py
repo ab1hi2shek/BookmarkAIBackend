@@ -12,6 +12,8 @@ from src.utils.tagGeneration.generate_tags import generate_tags
 # Define a blueprint for the User APIs
 bookmark_blueprint = Blueprint("bookmark_routes", __name__)
 
+CREATE_BOOKMARK_GENERATED_TAG_COUNT = 5
+
 """
 API to create a bookmark.
 """
@@ -35,11 +37,13 @@ def create_bookmark():
         tags_query = db.collection(TAG_COLLECTION).where("userId", "==", request.user_id).stream()
         allUserTags = [tag.to_dict() for tag in tags_query]
         generatedTags = generate_tags(
+            CREATE_BOOKMARK_GENERATED_TAG_COUNT,
             url, 
             page_content["title"],
             page_content["content"], 
             allUserTags
         )
+        tag_ids = process_tags(generatedTags, request.user_id)
 
         bookmark = BOOKMARK_MODEL.copy()
         bookmark.update({
@@ -50,13 +54,13 @@ def create_bookmark():
             "title": page_content["title"],
             "notes": "",
             "directoryId": DEFAULT_DIRECTORY_NAME_AND_ID,
-            "tags": [],
+            "tags": tag_ids,
             "createdAt": time_now,
             "updatedAt": time_now,
             "isDeleted": False,
             "isFavorite": False,
             "fetchedContent": page_content["content"],
-            "generatedTags": generatedTags
+            "generatedTags": []
         })
 
         # Save to Firestore
