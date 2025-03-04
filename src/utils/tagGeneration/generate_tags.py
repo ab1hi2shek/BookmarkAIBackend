@@ -32,7 +32,14 @@ def get_api_key():
         if not env_loaded:
             print("❌ Failed to load .env file!")
 
-    return os.getenv("PERPLEXITY_API_KEY")
+    api_key = os.getenv("PERPLEXITY_API_KEY")
+
+    if not api_key:
+        print("❌ ERROR: PERPLEXITY_API_KEY is missing!")
+    else:
+        print(f"✅ API Key Loaded: {api_key[:5]}...")  # Only show part of the key for security
+
+    return api_key
 
 
 def generate_prompt(tag_count, title, content, user_tags, suggested_selected_tags, url):
