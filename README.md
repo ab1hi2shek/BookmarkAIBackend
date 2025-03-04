@@ -18,6 +18,11 @@ A Flask application integrated with Firebase Firestore to manage users, bookmark
 pip install flask firebase-admin
 ```
 
+5. Generate a Perplexity AI api key and then create a `.env` file in the root of your project (same level as index.py) and add contents
+```bash
+PERPLEXITY_API_KEY=your_api_key
+```
+
 5. Run the application:
 
 ```bash
