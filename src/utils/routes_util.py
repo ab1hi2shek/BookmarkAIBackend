@@ -6,6 +6,9 @@ from datetime import datetime, timezone
 from src.models.user_model import USER_COLLECTION
 from src.models.bookmark_model import BOOKMARK_COLLECTION
 from src.models.tag_model import TAG_CREATOR, TAG_COLLECTION, TAG_ID_PREFIX
+from src.utils.tagGeneration.fetch_page_content import fetch_page_content
+from src.utils.tagGeneration.generate_tags import generate_tags
+import traceback
 
 """
 Decorator that ensures only authorized users can access the wrapped API routes.
@@ -125,3 +128,43 @@ def fetch_tag_names(tag_ids):
 
     tag_docs = db.collection(TAG_COLLECTION).where("tagId", "in", tag_ids).stream()
     return [tag_doc.to_dict().get("tagName", "") for tag_doc in tag_docs if tag_doc.exists]
+
+
+def async_process_bookmark_creation(bookmark_id, url, user_id):
+    """Background task to fetch page content, generate tags, and update bookmark."""
+    try:
+        print("🔄 Background processing started...")
+
+        # Fetch page content
+        page_content = fetch_page_content(url)
+
+        # Get user tags
+        tags_query = db.collection(TAG_COLLECTION).where("userId", "==", user_id).stream()
+        allUserTags = [tag.to_dict() for tag in tags_query]
+
+        # Generate AI tags
+        generatedTags = generate_tags(
+            5, # generate 5 number of tags when bookmark is created
+            url, 
+            page_content["title"],
+            page_content["content"], 
+            allUserTags
+        )
+
+        # Process tags and get tag IDs
+        tag_ids = process_tags(generatedTags, user_id)
+
+        # Update Firestore with generated tags & fetched content
+        db.collection(BOOKMARK_COLLECTION).document(bookmark_id).update({
+            "imageUrl": page_content["image"],
+            "title": page_content["title"],
+            "generatedTags": generatedTags,
+            "tags": tag_ids,
+            "updatedAt": int(datetime.now(timezone.utc).timestamp()),
+        })
+        
+        print(f"✅ Background processing completed for {bookmark_id}")
+
+    except Exception as e:
+        print(f"❌ Error in async process: {str(e)}")
+        print(traceback.format_exc())

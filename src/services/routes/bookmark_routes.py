@@ -1,13 +1,12 @@
 from datetime import datetime, timezone
 import traceback
+import threading
 from flask import Blueprint, jsonify, request
 from src.utils.init import db
 from src.models.bookmark_model import BOOKMARK_MODEL, BOOKMARK_COLLECTION, BOOKMARK_ID_PREFIX
 from src.models.tag_model import TAG_COLLECTION
 from src.models.directory_model import DIRECTORY_COLLECTION, DEFAULT_DIRECTORY_NAME_AND_ID
-from src.utils.routes_util import authorize_user, validate_required_fields, get_id, process_tags, fetch_tag_names
-from src.utils.tagGeneration.fetch_page_content import fetch_page_content
-from src.utils.tagGeneration.generate_tags import generate_tags
+from src.utils.routes_util import authorize_user, validate_required_fields, get_id, process_tags, fetch_tag_names, async_process_bookmark_creation
 
 # Define a blueprint for the User APIs
 bookmark_blueprint = Blueprint("bookmark_routes", __name__)
@@ -30,41 +29,30 @@ def create_bookmark():
 
         bookmark_id = get_id(BOOKMARK_ID_PREFIX)
         time_now = int(datetime.now(timezone.utc).timestamp())
-
         url = data["url"]
-        page_content = fetch_page_content(url)
-
-        tags_query = db.collection(TAG_COLLECTION).where("userId", "==", request.user_id).stream()
-        allUserTags = [tag.to_dict() for tag in tags_query]
-        generatedTags = generate_tags(
-            CREATE_BOOKMARK_GENERATED_TAG_COUNT,
-            url, 
-            page_content["title"],
-            page_content["content"], 
-            allUserTags
-        )
-        tag_ids = process_tags(generatedTags, request.user_id)
 
         bookmark = BOOKMARK_MODEL.copy()
         bookmark.update({
             "bookmarkId": bookmark_id,
             "userId": request.user_id,
             "url": url,
-            "imageUrl": page_content["image"],
-            "title": page_content["title"],
+            "imageUrl": "",
+            "title": "",
             "notes": "",
             "directoryId": DEFAULT_DIRECTORY_NAME_AND_ID,
-            "tags": tag_ids,
+            "tags": [],
             "createdAt": time_now,
             "updatedAt": time_now,
             "isDeleted": False,
             "isFavorite": False,
-            "fetchedContent": page_content["content"],
             "generatedTags": []
         })
 
         # Save to Firestore
         db.collection(BOOKMARK_COLLECTION).document(bookmark_id).set(bookmark)
+
+        # Start async processing in the background
+        threading.Thread(target=async_process_bookmark_creation, args=(bookmark_id, url, request.user_id), daemon=True).start()
 
         return jsonify({
             "message": "Bookmark created successfully", 
